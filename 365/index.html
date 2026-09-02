@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#24312b">
+  <title>365 вопросов к себе</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main>
+    <div class="glow one"></div><div class="glow two"></div>
+    <section class="shell">
+      <header><div class="brand"><span class="mark">✦</span>365 вопросов к себе</div><time id="date"></time></header>
+      <article class="card">
+        <div class="top"><span class="eyebrow">Вопрос дня</span><span id="number" class="number"></span></div>
+        <div class="copy"><div class="quote">“</div><h1 id="question"></h1></div>
+        <div class="note"><span>Остановись на минуту.<br>Здесь нет правильного ответа.</span><span class="arrow">↗</span></div>
+      </article>
+      <section class="answer" id="answer-box">
+        <label for="text">Твои мысли</label>
+        <textarea id="text" placeholder="Напиши то, что приходит первым…"></textarea>
+        <button id="save" disabled>Сохранить ответ <span>➤</span></button>
+      </section>
+      <section class="answer success" id="success" hidden><div class="check">✓</div><strong>Ответ сохранён</strong><p>Спасибо за честность с собой</p></section>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
