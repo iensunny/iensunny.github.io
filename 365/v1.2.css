@@ -35,6 +35,10 @@ body.keyboard-open .quick-actions { display: none; }
 .modal-sheet { max-height: min(88vh, 720px); overflow-y: auto; }
 .modal-sheet:focus { outline: none; }
 .bottom-nav button[aria-current="page"] { color: var(--accent); font-weight: 700; }
+.bottom-nav.three { gap: 8px; padding-left: max(12px, calc((100vw - 430px) / 2 + 12px)); padding-right: max(12px, calc((100vw - 430px) / 2 + 12px)); }
+.bottom-nav button { align-self: center; min-height: 48px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface) 82%, transparent); transition: color .2s ease, background .2s ease, border-color .2s ease, transform .15s ease; }
+.bottom-nav button:active { transform: scale(.97); }
+.bottom-nav button[aria-current="page"] { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: var(--pill); box-shadow: 0 5px 14px color-mix(in srgb, var(--accent) 13%, transparent); }
 .progress-label { position: relative; z-index: 2; }
 .progress-block { position: relative; }
 .question-position { display: flex; align-items: baseline; justify-content: space-between; margin: 0 3px 20px; color: var(--muted); font-size: 12px; }
