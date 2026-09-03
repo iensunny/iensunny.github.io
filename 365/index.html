@@ -1,31 +1,10 @@
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#24312b">
-  <title>365 вопросов к себе</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body>
-  <main>
-    <div class="glow one"></div><div class="glow two"></div>
-    <section class="shell">
-      <header><div class="brand"><span class="mark">✦</span>365 вопросов к себе</div><time id="date"></time></header>
-      <article class="card">
-        <div class="top"><span class="eyebrow">Вопрос дня</span><span id="number" class="number"></span></div>
-        <div class="copy"><div class="quote">“</div><h1 id="question"></h1></div>
-        <div class="note"><span>Остановись на минуту.<br>Здесь нет правильного ответа.</span><span class="arrow">↗</span></div>
-      </article>
-      <section class="answer" id="answer-box">
-        <label for="text">Твои мысли</label>
-        <textarea id="text" placeholder="Напиши то, что приходит первым…"></textarea>
-        <button id="save" disabled>Сохранить ответ <span>➤</span></button>
-      </section>
-      <section class="answer success" id="success" hidden><div class="check">✓</div><strong>Ответ сохранён</strong><p>Спасибо за честность с собой</p></section>
-    </section>
-  </main>
-  <script src="app.js"></script>
-</body>
-</html>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f3f1ec"><title>365 вопросов к себе</title><link rel="stylesheet" href="style.css"><script src="https://telegram.org/js/telegram-web-app.js"></script></head>
+<body><main id="app" class="app theme-day"><div class="grain"></div><div class="sun"></div><div class="branch">⌇❧⌇❧⌇</div>
+<section class="content"><header><button id="menu" class="icon" aria-label="Открыть настройки">☰</button><div class="brand"><b>365</b><span>вопросов к себе</span></div><i></i></header><p class="promise">Один вопрос в день для лучшего понимания себя<br>и внутренней устойчивости</p>
+<div class="progress"><div><span id="progress-label">0 / 365 вопросов</span><small id="percent">0%</small></div><i><b id="bar"></b></i></div>
+<article class="card"><span id="number" class="pill">Вопрос 1 из 365</span><small>ВОПРОС ДНЯ</small><h1 id="question"></h1><div class="ornament">— ❧ —</div><p>Не торопись с ответом.</p><div id="answer-wrap" class="field"><textarea id="answer" placeholder="Напиши здесь..." rows="2"></textarea><span>❧</span></div><div id="saved" class="saved" hidden>✓ <span><b>Ответ сохранён</b><small>Следующий вопрос появится завтра</small></span></div><button id="submit" class="primary" disabled>Ответить <span>→</span></button></article>
+<button id="share" class="action">⇧ <span><b>Поделиться вопросом</b><small>в виде открытки</small></span></button></section>
+<nav><button class="active">⌂<small>Главная</small></button><button>▤<small>Мои ответы</small></button><button id="settings">⚙<small>Настройки</small></button></nav>
+<div id="settings-modal" class="backdrop" hidden><section class="sheet"><button class="close">×</button><div class="round">◷</div><h2>Когда присылать вопрос?</h2><p>Выбери удобное время. Часовой пояс определяется автоматически.</p><label>Время сообщения<input id="notify-time" type="time" value="09:00"></label><div class="presets"><button>08:00</button><button>13:00</button><button>20:00</button></div><button id="save-time" class="primary">Сохранить время</button></section></div>
+<div id="share-modal" class="backdrop" hidden><section class="sheet share-sheet"><button class="close">×</button><div class="postcard"><b>365</b><span>вопросов к себе</span><small>ВОПРОС ДНЯ</small><p id="postcard-question"></p><em>Один вопрос в день для внутренней устойчивости</em></div><h2>Поделиться вопросом</h2><p>Ответ останется только у тебя — в открытке будет сам вопрос и ссылка на бота.</p><button id="make-card" class="primary">⇩ Создать открытку</button></section></div><div id="toast" class="toast" hidden></div>
+</main><script type="module" src="app.js"></script></body></html>
