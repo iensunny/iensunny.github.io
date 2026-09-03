@@ -1,4 +1,4 @@
-import { QUESTIONS } from './questions.js';
+import { QUESTIONS } from './questions.js?v=2';
 const $=s=>document.querySelector(s),tg=window.Telegram?.WebApp,now=new Date(),uid=String(tg?.initDataUnsafe?.user?.id||'guest'),prefix='365:v2:'+uid+':',today=now.toISOString().slice(0,10);
 const h=now.getHours(),period=h>=5&&h<11?'morning':h<17?'day':h<22?'evening':'night';
 $('#app').className='app theme-'+period;tg?.ready?.();tg?.expand?.();
