@@ -1,4 +1,4 @@
-import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=13';
+import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=21';
 
 const API_URL = 'https://questions-365-bot.iensunny-365.workers.dev';
 const BOT_LINK = 'https://t.me/qqwestionsBot';
@@ -13,6 +13,7 @@ const today = dayKey();
 
 let index = 0;
 let currentQuestion = QUESTIONS[0];
+let currentPostscript = POSTSCRIPTS[0];
 let progress = 0;
 let saved = false;
 let answer = '';
@@ -107,7 +108,7 @@ function render() {
   $('#saved').hidden = !saved;
   if (saved) {
     $('#gratitude').textContent = 'Спасибо, что сохранил эту мысль.';
-    $('#reflection').textContent = POSTSCRIPTS[index];
+    $('#reflection').textContent = currentPostscript;
     $('#submit-label').textContent = 'Посмотреть в истории';
     $('#submit').disabled = false;
   } else {
@@ -140,7 +141,7 @@ function renderHistory() {
     text.textContent = item.answer;
     const thought = document.createElement('p');
     thought.className = 'reflection';
-    thought.textContent = POSTSCRIPTS[item.questionId] || 'К этой мысли можно вернуться позже и увидеть её по-новому.';
+    thought.textContent = item.postscript || POSTSCRIPTS[item.questionId] || 'К этой мысли можно вернуться позже и увидеть её по-новому.';
     const actions = document.createElement('div');
     actions.className = 'entry-actions';
     actions.append(
@@ -195,7 +196,7 @@ async function submit() {
     const data = await api('/answer', { questionId: index, question: currentQuestion, answer: text, requestId });
     saved = true;
     progress = Math.min(progress + 1, QUESTIONS.length);
-    history = [data.answer || { date: today, question: currentQuestion, questionId: index, answer: text }, ...history.filter((item) => item.date !== today)];
+    history = [data.answer || { date: today, question: currentQuestion, questionId: index, answer: text, postscript: currentPostscript }, ...history.filter((item) => item.date !== today)];
     persist(prefix + 'answered-' + today, '1');
     persist(prefix + 'progress', String(progress));
     removePersisted([prefix + 'draft-' + today, requestIdKey]);
@@ -303,6 +304,7 @@ function deleteAll() {
     if (Number.isInteger(fresh.questionId) && fresh.question) {
       index = fresh.questionId;
       currentQuestion = fresh.question;
+      currentPostscript = fresh.postscript || POSTSCRIPTS[index];
       revealedQuestion = '';
     }
     renderHistory(); render();
@@ -414,7 +416,7 @@ async function createBrandedPdf(answers) {
 }
 
 function selectedShareText() {
-  if (shareKind === 'thought') return shareThought || POSTSCRIPTS[index];
+  if (shareKind === 'thought') return shareThought || currentPostscript;
   if (shareKind === 'custom') return $('#custom-share-text').value.trim();
   return currentQuestion;
 }
@@ -504,6 +506,7 @@ async function boot() {
     if (!data.complete && Number.isInteger(data.questionId)) {
       index = data.questionId;
       currentQuestion = data.question || QUESTIONS[index];
+      currentPostscript = data.postscript || POSTSCRIPTS[index];
       progress = Math.min(Number(data.progress) || 0, QUESTIONS.length);
       saved = Boolean(data.answeredToday);
       history = Array.isArray(data.history) ? data.history : [];
