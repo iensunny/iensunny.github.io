@@ -377,13 +377,25 @@ if (BOT_API_URL && tg?.initData) {
     })
     .then((data) => {
       if (data.complete || !Number.isInteger(data.questionId)) return;
+      if (data.resetLocal) {
+        for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+          const key = localStorage.key(i);
+          if (key?.startsWith(prefix)) localStorage.removeItem(key);
+        }
+        tg.CloudStorage?.removeItems?.(
+          [prefix + 'answered-count', prefix + 'notify-time', prefix + 'answered-' + today],
+          () => {},
+        );
+        fetch(`${BOT_API_URL}/reset-ack`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ initData: tg.initData }),
+        }).catch(() => {});
+      }
       index = data.questionId;
       progress = Math.min(Number(data.progress) || 0, 365);
       saved = Boolean(data.answeredToday);
-      if (Array.isArray(data.history) && data.history.length) {
-        // Prefer server history when available, but keep local shape
-        history = data.history;
-      }
+      if (Array.isArray(data.history)) history = data.history;
       render();
     })
     .catch(() => {
