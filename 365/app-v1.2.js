@@ -423,7 +423,7 @@ function updateSharePreview() {
   const labels = { question: 'Вопрос дня', thought: 'Мысль дня', custom: 'Твоя мысль' };
   const text = selectedShareText();
   $('#postcard-label').textContent = labels[shareKind];
-  $('#postcard-label').hidden = shareKind !== 'question';
+  $('#postcard-label').hidden = shareKind === 'custom';
   $('#postcard-question').textContent = text || 'Здесь появится твой текст';
   $('#postcard-meta').hidden = shareKind !== 'question';
   $('#custom-share-wrap').hidden = shareKind !== 'custom';
@@ -464,10 +464,21 @@ async function shareCard(text, label, filename) {
 function applyTheme() {
   const hour = new Date().getHours();
   const theme = hour >= 5 && hour < 11 ? 'morning' : hour < 17 ? 'day' : hour < 22 ? 'evening' : 'night';
+  const palettes = {
+    morning: { bg: '#fff4d8', ink: '#282318', muted: '#746c59', card: '#fffaf0', accent: '#8a6b28', accent2: '#b69648', pill: '#f5e8bd', line: '#917b4933', surface: '#fffaf0' },
+    day: { bg: '#edf4e9', ink: '#1e251a', muted: '#657060', card: '#fffdf7', accent: '#3e742c', accent2: '#71904c', pill: '#e8ecdd', line: '#66765a33', surface: '#ffffff' },
+    evening: { bg: '#f7dbc5', ink: '#2a1810', muted: '#765c50', card: '#fff4e9', accent: '#b95124', accent2: '#d37b4b', pill: '#f8d5bd', line: '#9d5b3d33', surface: '#fff9f3' },
+    night: { bg: '#091622', ink: '#f5f3eb', muted: '#bdc5c9', card: '#162736', accent: '#9ab875', accent2: '#759460', pill: '#283b31', line: '#dbe8e233', surface: '#122433' },
+  };
+  const palette = palettes[theme];
   app.className = `app-shell theme-${theme}`;
+  for (const [name, value] of Object.entries({ '--bg': palette.bg, '--ink': palette.ink, '--muted': palette.muted, '--card': palette.card, '--accent': palette.accent, '--accent-2': palette.accent2, '--pill': palette.pill, '--line': palette.line, '--surface': palette.surface })) app.style.setProperty(name, value);
+  app.style.backgroundColor = palette.bg;
+  document.documentElement.style.backgroundColor = palette.bg;
+  document.body.style.backgroundColor = palette.bg;
   document.body.dataset.timeTheme = theme;
   $('#postcard-preview').className = `postcard-preview theme-${theme}`;
-  const color = theme === 'night' ? '#091622' : theme === 'evening' ? '#f7dbc5' : theme === 'morning' ? '#fff4d8' : '#edf4e9';
+  const color = palette.bg;
   document.querySelector('meta[name="theme-color"]').content = color;
   try { tg?.setHeaderColor?.(color); tg?.setBackgroundColor?.(color); tg?.setBottomBarColor?.(color); } catch {}
 }
@@ -542,7 +553,7 @@ $$('.presets button').forEach((button) => button.onclick = () => { $('#notify-ti
 $('#share').onclick = () => openShare('question');
 $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
 $('#custom-share-text').addEventListener('input', updateSharePreview);
-$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : '', '365-k-sebe.png');
+$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png');
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;
