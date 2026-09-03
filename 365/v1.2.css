@@ -46,6 +46,14 @@ body.keyboard-open .quick-actions { display: none; }
 .share-choices button { min-height: 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 700; }
 .share-choices button.active { border-color: var(--accent); background: var(--pill); color: var(--accent); }
 .share-launch { width: 100%; }
+body[data-time-theme="morning"] { background: #fff4d8; }
+body[data-time-theme="day"] { background: #edf4e9; }
+body[data-time-theme="evening"] { background: #f7dbc5; }
+body[data-time-theme="night"] { background: #091622; }
+.app-shell.theme-morning { --bg: #fff4d8; --ink: #282318; --muted: #746c59; --card: #fffaf0e8; --accent: #8a6b28; --accent-2: #b69648; --pill: #f5e8bd; --line: #917b4933; --surface: #fffaf080; background: radial-gradient(circle at 82% 13%, #ffd97870, transparent 15rem), linear-gradient(155deg, #fffdf4, transparent 52%), var(--bg); }
+.app-shell.theme-night { color-scheme: dark; background: radial-gradient(circle at 65% 8%, #90b8d32e, transparent 15rem), radial-gradient(circle at 14% 42%, #47788f35, transparent 21rem), #091622; }
+.app-shell.theme-night .question-card { background: #142838f2; border-color: #b9d6df35; box-shadow: 0 20px 48px #0008; }
+.app-shell.theme-night .quick-actions button { background: #122433ed; border-color: #c1d3de30; }
 .answer-button:focus-visible, .secondary-button:focus-visible, .danger-button:focus-visible, .bottom-nav button:focus-visible, .modal-close:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 360px) {
   .app-content { padding-left: 12px; padding-right: 12px; }

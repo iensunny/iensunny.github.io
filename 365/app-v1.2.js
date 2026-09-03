@@ -423,7 +423,9 @@ function updateSharePreview() {
   const labels = { question: 'Вопрос дня', thought: 'Мысль дня', custom: 'Твоя мысль' };
   const text = selectedShareText();
   $('#postcard-label').textContent = labels[shareKind];
+  $('#postcard-label').hidden = shareKind === 'custom';
   $('#postcard-question').textContent = text || 'Здесь появится твой текст';
+  $('#postcard-meta').hidden = shareKind === 'custom';
   $('#custom-share-wrap').hidden = shareKind !== 'custom';
   $('#make-card').disabled = !text;
   $$('[data-share-kind]').forEach((button) => button.classList.toggle('active', button.dataset.shareKind === shareKind));
@@ -463,8 +465,11 @@ function applyTheme() {
   const hour = new Date().getHours();
   const theme = hour >= 5 && hour < 11 ? 'morning' : hour < 17 ? 'day' : hour < 22 ? 'evening' : 'night';
   app.className = `app-shell theme-${theme}`;
-  document.querySelector('meta[name="theme-color"]').content = theme === 'night' ? '#091622' : theme === 'evening' ? '#f7dbc5' : '#edf4e9';
-  try { tg?.setHeaderColor?.(document.querySelector('meta[name="theme-color"]').content); } catch {}
+  document.body.dataset.timeTheme = theme;
+  $('#postcard-preview').className = `postcard-preview theme-${theme}`;
+  const color = theme === 'night' ? '#091622' : theme === 'evening' ? '#f7dbc5' : theme === 'morning' ? '#fff4d8' : '#edf4e9';
+  document.querySelector('meta[name="theme-color"]').content = color;
+  try { tg?.setHeaderColor?.(color); tg?.setBackgroundColor?.(color); tg?.setBottomBarColor?.(color); } catch {}
 }
 
 async function boot() {
@@ -512,6 +517,9 @@ answerEl.addEventListener('blur', () => setTimeout(updateViewport, 120));
 window.visualViewport?.addEventListener('resize', updateViewport);
 window.visualViewport?.addEventListener('scroll', updateViewport);
 try { tg?.onEvent?.('viewportChanged', updateViewport); } catch {}
+try { tg?.onEvent?.('activated', applyTheme); } catch {}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) applyTheme(); });
+setInterval(applyTheme, 60_000);
 updateViewport();
 $('#submit').onclick = submit;
 $('#nav-home').onclick = () => setView('home');
@@ -534,7 +542,7 @@ $$('.presets button').forEach((button) => button.onclick = () => { $('#notify-ti
 $('#share').onclick = () => openShare('question');
 $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
 $('#custom-share-text').addEventListener('input', updateSharePreview);
-$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : 'ТВОЯ МЫСЛЬ', '365-k-sebe.png');
+$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png');
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;
