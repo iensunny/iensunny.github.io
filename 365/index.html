@@ -7,6 +7,12 @@
       content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
     />
     <meta name="theme-color" content="#f4f0e8" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="365: к себе" />
+    <meta property="og:description" content="Один бережный вопрос в день" />
+    <meta property="og:image" content="https://iensunny.github.io/365/og-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <title>365: к себе</title>
     <meta
       name="description"
@@ -18,7 +24,8 @@
       href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=5" />
+    <link rel="stylesheet" href="style.css?v=12" />
+    <link rel="stylesheet" href="v1.2.css?v=12" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
       :root {
@@ -159,6 +166,11 @@
           Один вопрос в день для лучшего понимания себя<br />и внутренней
           устойчивости
         </p>
+        <aside id="demo-banner" class="demo-banner" hidden>
+          <strong>Демонстрационный режим</strong>
+          <span>Здесь можно посмотреть приложение, но ответы не сохраняются.</span>
+          <a href="https://t.me/qqwestionsBot">Открыть полную версию в Telegram</a>
+        </aside>
 
         <section id="home-view">
           <section class="progress-block" aria-label="прогресс">
@@ -190,9 +202,11 @@
                 <span>Ответ сохранён в истории · следующий вопрос завтра</span>
               </div>
             </div>
+            <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
             <button id="submit" class="answer-button" disabled>
               <span id="submit-label">Ответить</span><span>→</span>
             </button>
+            <button id="share-reflection" class="secondary-button" hidden>Поделиться этой мыслью</button>
           </article>
           <div class="quick-actions">
             <button id="share">
@@ -219,16 +233,16 @@
       </div>
 
       <nav class="bottom-nav three" aria-label="Основная навигация">
-        <button id="nav-home" class="active"><span aria-hidden="true"></span><span>вопрос</span></button>
+        <button id="nav-home" class="active" aria-current="page"><span aria-hidden="true"></span><span>вопрос</span></button>
         <button id="nav-answers"><span aria-hidden="true"></span><span>ответы</span></button>
         <button id="nav-settings"><span aria-hidden="true"></span><span>настройки</span></button>
       </nav>
 
       <div id="settings-modal" class="modal-backdrop" hidden>
-        <section class="modal-sheet" role="dialog" aria-modal="true">
+        <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
           <button class="modal-close close" aria-label="Закрыть">×</button>
-          <span class="modal-icon">◷</span>
-          <h2>Когда присылать вопрос?</h2>
+          <span class="modal-icon" aria-hidden="true">◷</span>
+          <h2 id="settings-title">Когда присылать вопрос?</h2>
           <p>Выбери удобное время. Часовой пояс определяется автоматически.</p>
           <label class="time-field"
             ><span>Время сообщения</span
@@ -240,18 +254,24 @@
             <button type="button">20:00</button>
           </div>
           <button id="save-time" class="modal-primary">Сохранить время</button>
+          <div class="data-settings">
+            <h3>Твои данные</h3>
+            <p>Ответы хранятся в базе приложения после проверки Telegram-профиля. Черновик и резервная история также сохраняются на устройстве и в Telegram Cloud Storage. Эти данные не публикуются.</p>
+            <button id="export-data" class="secondary-button">Экспортировать ответы</button>
+            <button id="delete-data" class="danger-button">Удалить все личные данные</button>
+          </div>
         </section>
       </div>
 
       <div id="share-modal" class="modal-backdrop" hidden>
-        <section class="modal-sheet share-sheet" role="dialog" aria-modal="true">
+        <section class="modal-sheet share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title" tabindex="-1">
           <button class="modal-close close" aria-label="Закрыть">×</button>
           <div id="postcard-preview" class="postcard-preview theme-day">
             <strong>365</strong><span>к себе</span><small>Вопрос дня</small>
             <p id="postcard-question"></p>
             <em id="postcard-meta">365: к себе · вопрос 1 из 365</em>
           </div>
-          <h2>Поделиться вопросом</h2>
+          <h2 id="share-title">Поделиться вопросом</h2>
           <p>
             Ответ останется только у тебя. В открытке будет сам вопрос, а ссылка
             на бота добавится к сообщению.
@@ -260,8 +280,29 @@
         </section>
       </div>
 
+      <div id="edit-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="edit-title" tabindex="-1">
+          <button class="modal-close close" aria-label="Закрыть">×</button>
+          <h2 id="edit-title">Редактировать ответ</h2>
+          <label class="edit-field"><span>Твой ответ</span><textarea id="edit-answer" rows="6"></textarea></label>
+          <p id="edit-status" class="save-status" role="status" aria-live="polite"></p>
+          <button id="save-edit" class="modal-primary">Сохранить изменения</button>
+        </section>
+      </div>
+
+      <div id="confirm-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-copy" tabindex="-1">
+          <h2 id="confirm-title">Подтвердить действие</h2>
+          <p id="confirm-copy"></p>
+          <div class="confirm-actions">
+            <button id="confirm-cancel" class="secondary-button">Отмена</button>
+            <button id="confirm-action" class="danger-button">Удалить</button>
+          </div>
+        </section>
+      </div>
+
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app.js?v=8"></script>
+    <script type="module" src="app-v1.2.js?v=12"></script>
   </body>
 </html>
