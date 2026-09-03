@@ -423,9 +423,9 @@ function updateSharePreview() {
   const labels = { question: 'Вопрос дня', thought: 'Мысль дня', custom: 'Твоя мысль' };
   const text = selectedShareText();
   $('#postcard-label').textContent = labels[shareKind];
-  $('#postcard-label').hidden = shareKind === 'custom';
+  $('#postcard-label').hidden = shareKind !== 'question';
   $('#postcard-question').textContent = text || 'Здесь появится твой текст';
-  $('#postcard-meta').hidden = shareKind === 'custom';
+  $('#postcard-meta').hidden = shareKind !== 'question';
   $('#custom-share-wrap').hidden = shareKind !== 'custom';
   $('#make-card').disabled = !text;
   $$('[data-share-kind]').forEach((button) => button.classList.toggle('active', button.dataset.shareKind === shareKind));
@@ -542,7 +542,7 @@ $$('.presets button').forEach((button) => button.onclick = () => { $('#notify-ti
 $('#share').onclick = () => openShare('question');
 $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
 $('#custom-share-text').addEventListener('input', updateSharePreview);
-$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png');
+$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : '', '365-k-sebe.png');
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;
