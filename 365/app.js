@@ -108,6 +108,7 @@ let notifyTime = localStorage.getItem(prefix + 'notify-time') || '09:00';
 let view = 'home';
 let history = loadAnswers(prefix);
 let question = QUESTIONS[index];
+let resetApplied = false;
 
 const app = $('#app');
 const answerEl = $('#answer');
@@ -378,6 +379,7 @@ if (BOT_API_URL && tg?.initData) {
     .then((data) => {
       if (data.complete || !Number.isInteger(data.questionId)) return;
       if (data.resetLocal) {
+        resetApplied = true;
         for (let i = localStorage.length - 1; i >= 0; i -= 1) {
           const key = localStorage.key(i);
           if (key?.startsWith(prefix)) localStorage.removeItem(key);
@@ -408,6 +410,7 @@ if (tg?.isVersionAtLeast?.('6.9')) {
     tg.CloudStorage?.getItems(
       [prefix + 'answered-count', prefix + 'notify-time', prefix + 'answered-' + today],
       (_error, values) => {
+        if (resetApplied) return;
         if (!values) return;
         const cloudCount = Number(values[prefix + 'answered-count'] ?? '0');
         const cloudAnswered = values[prefix + 'answered-' + today] === '1';
