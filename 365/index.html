@@ -1,10 +1,162 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f3f1ec"><title>365 вопросов к себе</title><link rel="stylesheet" href="style.css?v=2"><script src="https://telegram.org/js/telegram-web-app.js"></script></head>
-<body><main id="app" class="app theme-day"><div class="grain"></div><div class="sun"></div><div class="branch">⌇❧⌇❧⌇</div>
-<section class="content"><header><button id="menu" class="icon" aria-label="Открыть настройки">☰</button><div class="brand"><b>365</b><span>вопросов к себе</span></div><i></i></header><p class="promise">Один вопрос в день для лучшего понимания себя<br>и внутренней устойчивости</p>
-<div class="progress"><div><span id="progress-label">0 / 365 вопросов</span><small id="percent">0%</small></div><i><b id="bar"></b></i></div>
-<article class="card"><span id="number" class="pill">Вопрос 1 из 365</span><small>ВОПРОС ДНЯ</small><h1 id="question"></h1><div class="ornament">— ❧ —</div><p>Не торопись с ответом.</p><div id="answer-wrap" class="field"><textarea id="answer" placeholder="Напиши здесь..." rows="2"></textarea><span>❧</span></div><div id="saved" class="saved" hidden>✓ <span><b>Ответ сохранён</b><small>Следующий вопрос появится завтра</small></span></div><button id="submit" class="primary" disabled>Ответить <span>→</span></button></article>
-<button id="share" class="action">⇧ <span><b>Поделиться вопросом</b><small>в виде открытки</small></span></button></section>
-<nav><button class="active">⌂<small>Главная</small></button><button>▤<small>Мои ответы</small></button><button id="settings">⚙<small>Настройки</small></button></nav>
-<div id="settings-modal" class="backdrop" hidden><section class="sheet"><button class="close">×</button><div class="round">◷</div><h2>Когда присылать вопрос?</h2><p>Выбери удобное время. Часовой пояс определяется автоматически.</p><label>Время сообщения<input id="notify-time" type="time" value="09:00"></label><div class="presets"><button>08:00</button><button>13:00</button><button>20:00</button></div><button id="save-time" class="primary">Сохранить время</button></section></div>
-<div id="share-modal" class="backdrop" hidden><section class="sheet share-sheet"><button class="close">×</button><div class="postcard"><b>365</b><span>вопросов к себе</span><small>ВОПРОС ДНЯ</small><p id="postcard-question"></p><em>Один вопрос в день для внутренней устойчивости</em></div><h2>Поделиться вопросом</h2><p>Ответ останется только у тебя — в открытке будет сам вопрос и ссылка на бота.</p><button id="make-card" class="primary">⇩ Создать открытку</button></section></div><div id="toast" class="toast" hidden></div>
-</main><script type="module" src="app.js?v=2"></script></body></html>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f4f0e8" />
+    <title>365: к себе</title>
+    <meta
+      name="description"
+      content="Один вопрос в день для лучшего понимания себя и внутренней устойчивости"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css?v=3" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      :root {
+        --font-manrope: 'Manrope', system-ui, sans-serif;
+        --font-lora: 'Lora', Georgia, serif;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-manrope);
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <main id="app" class="app-shell theme-day">
+      <div class="paper-grain" aria-hidden="true"></div>
+      <div class="sun-glow" aria-hidden="true"></div>
+      <div class="app-content">
+        <header class="topbar">
+          <button
+            id="menu"
+            class="icon-button menu-button"
+            aria-label="Открыть настройки"
+          >
+            ☰
+          </button>
+          <div class="brand">
+            <div class="brand-number">365</div>
+            <div class="brand-name">к себе</div>
+          </div>
+          <div class="header-spacer"></div>
+        </header>
+        <p class="promise">
+          Один вопрос в день для лучшего понимания себя<br />и внутренней
+          устойчивости
+        </p>
+
+        <section id="home-view">
+          <section class="progress-block" aria-label="прогресс">
+            <div class="progress-label">
+              <span id="progress-label">0 / 365 вопросов</span>
+              <span id="percent">0%</span>
+            </div>
+            <div class="progress-track"><span id="bar" style="width: 0%"></span></div>
+          </section>
+          <article class="question-card">
+            <span id="number" class="day-pill">Вопрос 1 из 365</span>
+            <p class="eyebrow">Вопрос дня</p>
+            <h1 id="question"></h1>
+            <div class="ornament" aria-hidden="true"><i></i><span>❧</span><i></i></div>
+            <p id="slow-down" class="slow-down">Не торопись с ответом.</p>
+            <label id="answer-wrap" class="answer-field">
+              <span class="sr-only">Твой ответ</span>
+              <textarea
+                id="answer"
+                placeholder="Напиши здесь..."
+                rows="3"
+              ></textarea>
+              <span aria-hidden="true">❧</span>
+            </label>
+            <div id="saved" class="saved-state" hidden>
+              <div>
+                <b id="gratitude"></b>
+                <strong id="reflection"></strong>
+                <span>Ответ сохранён в истории · следующий вопрос завтра</span>
+              </div>
+            </div>
+            <button id="submit" class="answer-button" disabled>
+              <span id="submit-label">Ответить</span><span>→</span>
+            </button>
+          </article>
+          <div class="quick-actions">
+            <button id="share">
+              <span
+                >Поделиться вопросом<br /><small>в виде открытки</small></span
+              >
+            </button>
+          </div>
+        </section>
+
+        <section id="answers-view" class="answers-view" hidden>
+          <div class="answers-heading">
+            <p class="eyebrow">Твоя история</p>
+            <h1>Мои ответы</h1>
+            <span id="answers-count">0 сохранено</span>
+          </div>
+          <div id="answers-list" class="answers-list"></div>
+          <div id="answers-empty" class="answers-empty" hidden>
+            <h2>Здесь появятся твои ответы</h2>
+            <p>Ответь на первый вопрос — и начнётся твоя личная история.</p>
+            <button id="back-home" class="modal-primary">Перейти к вопросу</button>
+          </div>
+        </section>
+      </div>
+
+      <nav class="bottom-nav three" aria-label="Основная навигация">
+        <button id="nav-home" class="active"><span>⌂</span><span>Главная</span></button>
+        <button id="nav-answers"><span>▤</span><span>Мои ответы</span></button>
+        <button id="nav-settings"><span>⚙</span><span>Настройки</span></button>
+      </nav>
+
+      <div id="settings-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet" role="dialog" aria-modal="true">
+          <button class="modal-close close" aria-label="Закрыть">×</button>
+          <span class="modal-icon">◷</span>
+          <h2>Когда присылать вопрос?</h2>
+          <p>Выбери удобное время. Часовой пояс определяется автоматически.</p>
+          <label class="time-field"
+            ><span>Время сообщения</span
+            ><input id="notify-time" type="time" value="09:00"
+          /></label>
+          <div class="time-presets presets">
+            <button type="button">08:00</button>
+            <button type="button">13:00</button>
+            <button type="button">20:00</button>
+          </div>
+          <button id="save-time" class="modal-primary">Сохранить время</button>
+        </section>
+      </div>
+
+      <div id="share-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet share-sheet" role="dialog" aria-modal="true">
+          <button class="modal-close close" aria-label="Закрыть">×</button>
+          <div class="postcard-preview">
+            <strong>365</strong><span>к себе</span><small>Вопрос дня</small>
+            <p id="postcard-question"></p>
+            <em id="postcard-meta">365: к себе · вопрос 1 из 365</em>
+          </div>
+          <h2>Поделиться вопросом</h2>
+          <p>
+            Ответ останется только у тебя. В открытке будет сам вопрос, а ссылка
+            на бота добавится к сообщению.
+          </p>
+          <button id="make-card" class="modal-primary">Создать открытку</button>
+        </section>
+      </div>
+
+      <div id="toast" class="toast" hidden role="status"></div>
+    </main>
+    <script type="module" src="app.js?v=3"></script>
+  </body>
+</html>
