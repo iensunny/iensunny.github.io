@@ -1,4 +1,4 @@
-import { QUESTIONS, REFLECTIONS, GRATITUDES } from './questions.js?v=4';
+import { QUESTIONS, REFLECTIONS, GRATITUDES } from './questions.js?v=5';
 
 const BOT_API_URL = 'https://questions-365-bot.iensunny-365.workers.dev';
 const BOT_LINK = 'https://t.me/qqwestionsBot';
@@ -123,6 +123,8 @@ function showNotice(text, ms = 2800) {
 function applyPeriod(next) {
   period = next;
   app.className = `app-shell theme-${period}`;
+  const preview = $('#postcard-preview');
+  if (preview) preview.className = `postcard-preview theme-${period}`;
   if (tg?.isVersionAtLeast?.('6.1')) {
     try {
       tg.setHeaderColor?.(period === 'night' ? '#0b1722' : '#f4f0e8');
@@ -273,10 +275,21 @@ async function sharePostcard() {
   ctx.beginPath();
   ctx.roundRect(74, 350, 932, 1240, 54);
   ctx.fill();
-  ctx.strokeStyle = period === 'night' ? 'rgba(220,235,240,.18)' : 'rgba(72,92,56,.13)';
+  ctx.strokeStyle =
+    period === 'night'
+      ? 'rgba(220,235,240,.18)'
+      : period === 'evening'
+        ? 'rgba(166,77,40,.18)'
+        : 'rgba(72,92,56,.13)';
   ctx.lineWidth = 2;
   ctx.stroke();
-  ctx.fillStyle = period === 'night' ? '#f5f1e8' : '#1e251a';
+  const ink =
+    period === 'night' ? '#f5f1e8' : period === 'evening' ? '#2a1810' : '#1e251a';
+  const muted =
+    period === 'night' ? '#cbd5d8' : period === 'evening' ? '#7a4a32' : '#53604c';
+  const footer =
+    period === 'night' ? '#dbe5e7' : period === 'evening' ? '#3a2014' : '#35402f';
+  ctx.fillStyle = ink;
   ctx.textAlign = 'center';
   ctx.font = '400 154px Georgia';
   ctx.fillText('365', 540, 220);
@@ -285,7 +298,7 @@ async function sharePostcard() {
   ctx.fillStyle = colors[2];
   ctx.font = '700 30px Arial';
   ctx.fillText('ВОПРОС ДНЯ', 540, 490);
-  ctx.fillStyle = period === 'night' ? '#f5f1e8' : '#182015';
+  ctx.fillStyle = ink;
   ctx.font = `500 ${question.length > 105 ? 58 : question.length > 70 ? 66 : 76}px Georgia`;
   const lines = wrapText(ctx, question, 830);
   const lineHeight = question.length > 105 ? 78 : 92;
@@ -302,11 +315,11 @@ async function sharePostcard() {
   ctx.lineTo(760, 1450);
   ctx.stroke();
   ctx.globalAlpha = 1;
-  ctx.fillStyle = period === 'night' ? '#cbd5d8' : '#53604c';
+  ctx.fillStyle = muted;
   ctx.font = '400 29px Arial';
   ctx.fillText('Один вопрос в день, чтобы лучше понимать себя', 540, 1518);
   ctx.fillText('и сохранять внутреннюю устойчивость', 540, 1563);
-  ctx.fillStyle = period === 'night' ? '#dbe5e7' : '#35402f';
+  ctx.fillStyle = footer;
   ctx.font = '600 27px Arial';
   ctx.fillText('365: К СЕБЕ  •  ВОПРОС ' + Math.min(index + 1, 365) + ' ИЗ 365', 540, 1780);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -365,7 +378,9 @@ if (BOT_API_URL && tg?.initData) {
       }
       render();
     })
-    .catch(() => showNotice('Не удалось обновить вопрос. Проверь подключение.'));
+    .catch(() => {
+      // Локальный вопрос уже есть — без toast, чтобы не пугать при 401/офлайне
+    });
 }
 
 if (tg?.isVersionAtLeast?.('6.9')) {
@@ -392,14 +407,39 @@ if (tg?.isVersionAtLeast?.('6.9')) {
 track('mini_app_open', { source: tg?.initDataUnsafe?.start_param || 'direct' });
 
 const viewport = window.visualViewport;
-const syncViewport = () =>
-  document.documentElement.style.setProperty(
-    '--app-height',
-    `${viewport?.height || window.innerHeight}px`,
-  );
+let baseAppHeight = Math.round(tg?.viewportStableHeight || window.innerHeight);
+
+function syncViewport() {
+  const visual = Math.round(viewport?.height || window.innerHeight);
+  const stable = Math.round(tg?.viewportStableHeight || visual);
+  const focused = document.activeElement === answerEl;
+  if (!focused) {
+    baseAppHeight = Math.max(baseAppHeight, stable, visual);
+  }
+  // Без клавиатуры — стабильная высота; с клавиатурой — только уменьшаем, не раздуваем страницу
+  const next = focused ? Math.min(baseAppHeight, visual) : baseAppHeight;
+  document.documentElement.style.setProperty('--app-height', `${next}px`);
+}
+
+function scrollAnswerIntoView() {
+  if (document.activeElement !== answerEl) return;
+  const wrap = $('#answer-wrap');
+  const submitBtn = $('#submit');
+  wrap?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  app.scrollBy({ top: 140, behavior: 'smooth' });
+  setTimeout(() => {
+    submitBtn?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    app.scrollBy({ top: 80, behavior: 'smooth' });
+  }, 220);
+}
+
 syncViewport();
-viewport?.addEventListener('resize', syncViewport);
+viewport?.addEventListener('resize', () => {
+  syncViewport();
+  if (document.activeElement === answerEl) setTimeout(scrollAnswerIntoView, 80);
+});
 viewport?.addEventListener('scroll', syncViewport);
+window.addEventListener('resize', syncViewport);
 setInterval(() => applyPeriod(previewPeriod() ?? getPeriod(new Date().getHours())), 60000);
 
 answerEl.addEventListener('input', (e) => {
@@ -407,8 +447,12 @@ answerEl.addEventListener('input', (e) => {
   if (!saved) $('#submit').disabled = !answer.trim();
 });
 answerEl.addEventListener('focus', () => {
-  setTimeout(() => answerEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+  syncViewport();
+  setTimeout(scrollAnswerIntoView, 120);
+  setTimeout(scrollAnswerIntoView, 380);
+  setTimeout(scrollAnswerIntoView, 700);
 });
+answerEl.addEventListener('blur', () => setTimeout(syncViewport, 120));
 
 $('#submit').addEventListener('click', () => {
   if (saved) {
@@ -419,7 +463,7 @@ $('#submit').addEventListener('click', () => {
   submit();
 });
 
-$('#menu').onclick = $('#nav-settings').onclick = openSettings;
+$('#nav-settings').onclick = openSettings;
 $('#nav-home').onclick = () => setView('home');
 $('#nav-answers').onclick = () => setView('answers');
 $('#back-home').onclick = () => setView('home');
@@ -431,7 +475,13 @@ $$('.presets button').forEach((b) => {
   };
 });
 $('#save-time').onclick = saveSettings;
-$('#share').onclick = () => ($('#share-modal').hidden = false);
+$('#share').onclick = () => {
+  applyPeriod(period);
+  $('#postcard-question').textContent = question;
+  $('#postcard-meta').textContent =
+    '365: к себе · вопрос ' + Math.min(index + 1, 365) + ' из 365';
+  $('#share-modal').hidden = false;
+};
 $('#make-card').onclick = () => sharePostcard();
 $$('.close').forEach((b) => {
   b.onclick = () => (b.closest('.modal-backdrop').hidden = true);

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
     />
     <meta name="theme-color" content="#f4f0e8" />
     <title>365: к себе</title>
@@ -18,22 +18,129 @@
       href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=4" />
+    <link rel="stylesheet" href="style.css?v=5" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
       :root {
         --font-manrope: 'Manrope', system-ui, sans-serif;
         --font-lora: 'Lora', Georgia, serif;
-        --app-height: 100dvh;
+        --app-height: 100%;
       }
       html,
       body {
+        width: 100%;
+        height: 100%;
         margin: 0;
-        min-height: var(--app-height);
+        overflow: hidden;
+        overscroll-behavior: none;
         font-family: var(--font-manrope);
+        background: transparent;
+      }
+      body {
+        position: fixed;
+        inset: 0;
       }
       .app-shell {
-        min-height: var(--app-height);
+        height: var(--app-height);
+        max-height: var(--app-height);
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+      .topbar {
+        grid-template-columns: 1fr !important;
+        justify-items: center;
+      }
+      .topbar .brand {
+        text-align: center;
+      }
+      .menu-button,
+      .header-spacer {
+        display: none !important;
+      }
+      .saved-state {
+        padding: 18px 16px !important;
+        gap: 12px !important;
+      }
+      .saved-state b {
+        display: block;
+        margin-bottom: 10px !important;
+        font-size: 18px !important;
+        line-height: 1.4 !important;
+      }
+      .saved-state strong {
+        display: block;
+        margin-bottom: 12px !important;
+        color: var(--accent) !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        line-height: 1.55 !important;
+      }
+      .saved-state span {
+        display: block;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+      }
+      .bottom-nav.three {
+        grid-template-columns: repeat(3, 1fr);
+        height: calc(78px + env(safe-area-inset-bottom)) !important;
+        padding-top: 10px !important;
+      }
+      .bottom-nav button {
+        gap: 4px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.01em;
+      }
+      .bottom-nav button > span:first-child {
+        display: none !important;
+      }
+      .bottom-nav button > span:last-child {
+        font-size: 15px !important;
+      }
+      .postcard-preview {
+        transition:
+          background 0.35s ease,
+          color 0.35s ease,
+          border-color 0.35s ease;
+      }
+      .postcard-preview.theme-morning {
+        background: linear-gradient(160deg, #fff8df, #edf2d8);
+        color: #1e251a;
+        border-color: rgba(84, 123, 53, 0.18);
+      }
+      .postcard-preview.theme-day {
+        background: linear-gradient(160deg, #f3f4e9, #dfead7);
+        color: #1e251a;
+        border-color: rgba(63, 116, 47, 0.18);
+      }
+      .postcard-preview.theme-evening {
+        background: linear-gradient(160deg, #fff0df, #efc3a5);
+        color: #2a1810;
+        border-color: rgba(166, 77, 40, 0.2);
+      }
+      .postcard-preview.theme-night {
+        background: linear-gradient(160deg, #111f2c, #213649);
+        color: #f5f1e8;
+        border-color: rgba(168, 199, 138, 0.22);
+      }
+      .postcard-preview.theme-night small,
+      .postcard-preview.theme-night em {
+        color: #a8c78a;
+      }
+      .postcard-preview.theme-morning small,
+      .postcard-preview.theme-day small {
+        color: #547b35;
+      }
+      .postcard-preview.theme-evening small {
+        color: #a64d28;
+      }
+      #answer-wrap {
+        scroll-margin-bottom: 180px;
+      }
+      #submit {
+        scroll-margin-bottom: 140px;
       }
     </style>
   </head>
@@ -43,18 +150,10 @@
       <div class="sun-glow" aria-hidden="true"></div>
       <div class="app-content">
         <header class="topbar">
-          <button
-            id="menu"
-            class="icon-button menu-button"
-            aria-label="Открыть настройки"
-          >
-            ☰
-          </button>
           <div class="brand">
             <div class="brand-number">365</div>
             <div class="brand-name">к себе</div>
           </div>
-          <div class="header-spacer"></div>
         </header>
         <p class="promise">
           Один вопрос в день для лучшего понимания себя<br />и внутренней
@@ -120,9 +219,9 @@
       </div>
 
       <nav class="bottom-nav three" aria-label="Основная навигация">
-        <button id="nav-home" class="active"><span>⌂</span><span>Главная</span></button>
-        <button id="nav-answers"><span>▤</span><span>Мои ответы</span></button>
-        <button id="nav-settings"><span>⚙</span><span>Настройки</span></button>
+        <button id="nav-home" class="active"><span aria-hidden="true"></span><span>вопрос</span></button>
+        <button id="nav-answers"><span aria-hidden="true"></span><span>ответы</span></button>
+        <button id="nav-settings"><span aria-hidden="true"></span><span>настройки</span></button>
       </nav>
 
       <div id="settings-modal" class="modal-backdrop" hidden>
@@ -147,7 +246,7 @@
       <div id="share-modal" class="modal-backdrop" hidden>
         <section class="modal-sheet share-sheet" role="dialog" aria-modal="true">
           <button class="modal-close close" aria-label="Закрыть">×</button>
-          <div class="postcard-preview">
+          <div id="postcard-preview" class="postcard-preview theme-day">
             <strong>365</strong><span>к себе</span><small>Вопрос дня</small>
             <p id="postcard-question"></p>
             <em id="postcard-meta">365: к себе · вопрос 1 из 365</em>
@@ -163,6 +262,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app.js?v=4"></script>
+    <script type="module" src="app.js?v=5"></script>
   </body>
 </html>
