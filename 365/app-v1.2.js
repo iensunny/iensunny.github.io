@@ -477,6 +477,7 @@ function applyTheme() {
   document.documentElement.style.backgroundColor = palette.bg;
   document.body.style.backgroundColor = palette.bg;
   document.body.dataset.timeTheme = theme;
+  document.documentElement.dataset.timeTheme = theme;
   $('#postcard-preview').className = `postcard-preview theme-${theme}`;
   const color = palette.bg;
   document.querySelector('meta[name="theme-color"]').content = color;

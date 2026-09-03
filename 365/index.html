@@ -25,8 +25,17 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css?v=12" />
-    <link rel="stylesheet" href="v1.2.css?v=18" />
+    <link rel="stylesheet" href="v1.2.css?v=19" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      (() => {
+        const hour = new Date().getHours();
+        const theme = hour >= 5 && hour < 11 ? 'morning' : hour < 17 ? 'day' : hour < 22 ? 'evening' : 'night';
+        document.documentElement.dataset.timeTheme = theme;
+        const colors = { morning: '#fff4d8', day: '#edf4e9', evening: '#f7dbc5', night: '#091622' };
+        document.querySelector('meta[name="theme-color"]').content = colors[theme];
+      })();
+    </script>
     <style>
       :root {
         --font-manrope: 'Manrope', system-ui, sans-serif;
@@ -55,6 +64,17 @@
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
       }
+      html[data-time-theme='morning'], html[data-time-theme='morning'] body { background: #fff4d8 !important; }
+      html[data-time-theme='morning'] .app-shell { --bg:#fff4d8; --ink:#282318; --muted:#746c59; --card:#fffaf0; --accent:#8a6b28; --accent-2:#b69648; --pill:#f5e8bd; --line:#917b4933; --surface:#fffaf0; color:#282318 !important; background:#fff4d8 !important; }
+      html[data-time-theme='day'], html[data-time-theme='day'] body { background: #edf4e9 !important; }
+      html[data-time-theme='day'] .app-shell { --bg:#edf4e9; --ink:#1e251a; --muted:#657060; --card:#fffdf7; --accent:#3e742c; --accent-2:#71904c; --pill:#e8ecdd; --line:#66765a33; --surface:#fff; color:#1e251a !important; background:#edf4e9 !important; }
+      html[data-time-theme='evening'], html[data-time-theme='evening'] body { background: #f7dbc5 !important; }
+      html[data-time-theme='evening'] .app-shell { --bg:#f7dbc5; --ink:#2a1810; --muted:#765c50; --card:#fff4e9; --accent:#b95124; --accent-2:#d37b4b; --pill:#f8d5bd; --line:#9d5b3d33; --surface:#fff9f3; color:#2a1810 !important; background:#f7dbc5 !important; }
+      html[data-time-theme='night'], html[data-time-theme='night'] body { background: #091622 !important; }
+      html[data-time-theme='night'] .app-shell { --bg:#091622; --ink:#f5f3eb; --muted:#bdc5c9; --card:#162736; --accent:#9ab875; --accent-2:#759460; --pill:#283b31; --line:#dbe8e233; --surface:#122433; color:#f5f3eb !important; background:#091622 !important; color-scheme:dark; }
+      html[data-time-theme='night'] .question-card { background:#162736 !important; border-color:#b9d6df35 !important; }
+      html[data-time-theme='night'] .bottom-nav { background:#0b1a27f5 !important; }
+      html[data-time-theme='night'] .quick-actions button { background:#122433 !important; border-color:#c1d3de30 !important; }
       .topbar {
         grid-template-columns: 1fr !important;
         justify-items: center;
@@ -301,6 +321,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app-v1.2.js?v=18"></script>
+    <script type="module" src="app-v1.2.js?v=19"></script>
   </body>
 </html>
