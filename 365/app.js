@@ -198,9 +198,27 @@ function render() {
   }
 }
 
-function submit() {
+async function submit() {
   const text = answer.trim();
   if (!text || saved) return;
+  if (BOT_API_URL && tg?.initData) {
+    try {
+      const response = await fetch(`${BOT_API_URL}/answer`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          initData: tg.initData,
+          questionId: index,
+          question,
+          answer: text,
+        }),
+      });
+      if (!response.ok) throw new Error('answer was not saved');
+    } catch {
+      showNotice('Не удалось сохранить ответ. Проверь подключение и попробуй ещё раз.');
+      return;
+    }
+  }
   const next = Math.min(progress + 1, 365);
   persistValue(prefix + 'answered-count', String(next));
   persistValue(prefix + 'answered-' + today, '1');
@@ -210,17 +228,7 @@ function submit() {
   history = loadAnswers(prefix);
   render();
   track(progress === 1 ? 'first_answer' : 'repeat_answer', { question_id: index });
-  try {
-    tg?.sendData(
-      JSON.stringify({
-        type: 'daily_answer',
-        question_id: index,
-        question,
-        answer: text,
-      }),
-    );
-    tg?.HapticFeedback?.notificationOccurred('success');
-  } catch {}
+  tg?.HapticFeedback?.notificationOccurred('success');
 }
 
 function openSettings() {
