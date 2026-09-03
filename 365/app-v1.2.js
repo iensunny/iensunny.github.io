@@ -425,7 +425,7 @@ function updateSharePreview() {
   $('#postcard-label').textContent = labels[shareKind];
   $('#postcard-label').hidden = shareKind === 'custom';
   $('#postcard-question').textContent = text || 'Здесь появится твой текст';
-  $('#postcard-meta').hidden = shareKind !== 'question';
+  $('#postcard-meta').hidden = shareKind === 'custom';
   $('#custom-share-wrap').hidden = shareKind !== 'custom';
   $('#make-card').disabled = !text;
   $$('[data-share-kind]').forEach((button) => button.classList.toggle('active', button.dataset.shareKind === shareKind));
@@ -436,7 +436,7 @@ function openShare(kind = 'question', thought = '') {
   updateSharePreview(); openModal('#share-modal');
 }
 
-async function shareCard(text, label, filename) {
+async function shareCard(text, label, filename, includeNumber = false) {
   const canvas = document.createElement('canvas');
   canvas.width = 1080; canvas.height = 1350;
   const ctx = canvas.getContext('2d');
@@ -445,6 +445,9 @@ async function shareCard(text, label, filename) {
   ctx.fillStyle = gradient; ctx.fillRect(0, 0, 1080, 1350);
   ctx.textAlign = 'center'; ctx.fillStyle = '#1e251a'; ctx.font = '400 118px Georgia'; ctx.fillText('365', 540, 180);
   ctx.fillStyle = '#547b35'; ctx.font = '700 28px Arial'; ctx.fillText(label, 540, 300);
+  if (includeNumber) {
+    ctx.fillStyle = '#6b765f'; ctx.font = '600 25px Arial'; ctx.fillText(`#${index + 1}`, 540, 350);
+  }
   ctx.fillStyle = '#1e251a'; ctx.font = `500 ${text.length > 150 ? 47 : 56}px Georgia`;
   const lines = wrapText(ctx, text, 820); const lineHeight = text.length > 150 ? 66 : 76;
   let y = 700 - ((lines.length - 1) * lineHeight) / 2;
@@ -463,7 +466,7 @@ async function shareCard(text, label, filename) {
 
 function applyTheme() {
   const hour = new Date().getHours();
-  const theme = hour >= 5 && hour < 11 ? 'morning' : hour < 17 ? 'day' : hour < 22 ? 'evening' : 'night';
+  const theme = hour >= 5 && hour < 11 ? 'morning' : hour >= 11 && hour < 17 ? 'day' : hour >= 17 && hour < 22 ? 'evening' : 'night';
   const palettes = {
     morning: { bg: '#fff4d8', ink: '#282318', muted: '#746c59', card: '#fffaf0', accent: '#8a6b28', accent2: '#b69648', pill: '#f5e8bd', line: '#917b4933', surface: '#fffaf0' },
     day: { bg: '#edf4e9', ink: '#1e251a', muted: '#657060', card: '#fffdf7', accent: '#3e742c', accent2: '#71904c', pill: '#e8ecdd', line: '#66765a33', surface: '#ffffff' },
@@ -554,7 +557,7 @@ $$('.presets button').forEach((button) => button.onclick = () => { $('#notify-ti
 $('#share').onclick = () => openShare('question');
 $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
 $('#custom-share-text').addEventListener('input', updateSharePreview);
-$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png');
+$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png', shareKind !== 'custom');
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;
