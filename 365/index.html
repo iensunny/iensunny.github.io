@@ -25,7 +25,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css?v=12" />
-    <link rel="stylesheet" href="v1.2.css?v=12" />
+    <link rel="stylesheet" href="v1.2.css?v=14" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
       :root {
@@ -173,15 +173,12 @@
         </aside>
 
         <section id="home-view">
-          <section class="progress-block" aria-label="прогресс">
-            <div class="progress-label">
-              <span id="progress-label">0 / 365 вопросов</span>
-              <span id="percent">0%</span>
-            </div>
-            <div class="progress-track"><span id="bar" style="width: 0%"></span></div>
+          <section class="question-position" aria-label="Номер вопроса">
+            <span>Сегодняшний вопрос</span>
+            <strong id="question-index">#1</strong>
           </section>
           <article class="question-card">
-            <span id="number" class="day-pill">Вопрос 1 из 365</span>
+            <span id="number" class="day-pill">Вопрос дня</span>
             <p class="eyebrow">Вопрос дня</p>
             <h1 id="question"></h1>
             <div class="ornament" aria-hidden="true"><i></i><span>❧</span><i></i></div>
@@ -193,7 +190,6 @@
                 placeholder="Напиши здесь..."
                 rows="3"
               ></textarea>
-              <span aria-hidden="true">❧</span>
             </label>
             <div id="saved" class="saved-state" hidden>
               <div>
@@ -206,12 +202,11 @@
             <button id="submit" class="answer-button" disabled>
               <span id="submit-label">Ответить</span><span>→</span>
             </button>
-            <button id="share-reflection" class="secondary-button" hidden>Поделиться этой мыслью</button>
           </article>
           <div class="quick-actions">
-            <button id="share">
+            <button id="share" class="share-launch">
               <span
-                >Поделиться вопросом<br /><small>в виде открытки</small></span
+                >Поделиться<br /><small>создать открытку</small></span
               >
             </button>
           </div>
@@ -267,16 +262,19 @@
         <section class="modal-sheet share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title" tabindex="-1">
           <button class="modal-close close" aria-label="Закрыть">×</button>
           <div id="postcard-preview" class="postcard-preview theme-day">
-            <strong>365</strong><span>к себе</span><small>Вопрос дня</small>
+            <strong>365</strong><span>к себе</span><small id="postcard-label">Вопрос дня</small>
             <p id="postcard-question"></p>
-            <em id="postcard-meta">365: к себе · вопрос 1 из 365</em>
+            <em id="postcard-meta">365: к себе · #1</em>
           </div>
-          <h2 id="share-title">Поделиться вопросом</h2>
-          <p>
-            Ответ останется только у тебя. В открытке будет сам вопрос, а ссылка
-            на бота добавится к сообщению.
-          </p>
-          <button id="make-card" class="modal-primary">Создать открытку</button>
+          <h2 id="share-title">Что поместить на открытку?</h2>
+          <div class="share-choices" role="group" aria-label="Содержание открытки">
+            <button type="button" data-share-kind="question" class="active">Вопрос</button>
+            <button type="button" data-share-kind="thought">Мысль</button>
+            <button type="button" data-share-kind="custom">Свой текст</button>
+          </div>
+          <label id="custom-share-wrap" class="edit-field" hidden><span>Текст открытки</span><textarea id="custom-share-text" rows="3" maxlength="500" placeholder="Напиши свой текст..."></textarea></label>
+          <p>Личный ответ не добавляется автоматически. Сначала проверь открытку выше.</p>
+          <button id="make-card" class="modal-primary">Поделиться открыткой</button>
         </section>
       </div>
 
@@ -303,6 +301,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app-v1.2.js?v=12"></script>
+    <script type="module" src="app-v1.2.js?v=14"></script>
   </body>
 </html>

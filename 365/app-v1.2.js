@@ -23,6 +23,8 @@ let confirmHandler = null;
 let lastFocused = null;
 let saveLocked = false;
 let revealedQuestion = '';
+let shareKind = 'question';
+let shareThought = '';
 
 const app = $('#app');
 const answerEl = $('#answer');
@@ -95,18 +97,14 @@ function setView(view) {
 
 function render() {
   const question = currentQuestion || QUESTIONS[index] || QUESTIONS[0];
-  const pct = progress ? ((progress / QUESTIONS.length) * 100).toFixed(progress < 37 ? 1 : 0) : '0';
-  $('#progress-label').textContent = `${progress} / ${QUESTIONS.length} вопросов`;
-  $('#percent').textContent = `${pct}%`;
-  $('#bar').style.width = `${(progress / QUESTIONS.length) * 100}%`;
-  $('#number').textContent = `Вопрос ${Math.min(progress + (saved ? 0 : 1), QUESTIONS.length)} из ${QUESTIONS.length}`;
+  $('#question-index').textContent = `#${index + 1}`;
+  $('#number').textContent = 'Вопрос дня';
   renderQuestion(question);
   $('#postcard-question').textContent = question;
-  $('#postcard-meta').textContent = `365: к себе · вопрос ${index + 1}`;
+  $('#postcard-meta').textContent = `365: к себе · #${index + 1}`;
   $('#slow-down').hidden = saved;
   $('#answer-wrap').hidden = saved;
   $('#saved').hidden = !saved;
-  $('#share-reflection').hidden = !saved;
   if (saved) {
     $('#gratitude').textContent = 'Спасибо, что сохранил эту мысль.';
     $('#reflection').textContent = POSTSCRIPTS[index];
@@ -147,7 +145,7 @@ function renderHistory() {
     actions.className = 'entry-actions';
     actions.append(
       actionButton('Редактировать', 'secondary-button', () => openEdit(item)),
-      actionButton('Поделиться мыслью', 'secondary-button', () => shareCard(thought.textContent, 'МЫСЛЬ ДНЯ', '365-mysl.png')),
+      actionButton('Поделиться', 'secondary-button', () => openShare('thought', thought.textContent)),
       actionButton('Удалить', 'danger-button', () => confirmDeleteOne(item)),
     );
     article.append(time, title, text, thought, actions);
@@ -290,18 +288,25 @@ function confirmDeleteOne(item) {
 async function exportData() {
   try {
     const data = await api('/export');
-    download(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), '365-k-sebe-export.json');
+    const pdf = await createBrandedPdf(Array.isArray(data.answers) ? data.answers : []);
+    download(pdf, '365-k-sebe-otvety.pdf');
   } catch { $('#save-status').textContent = 'Не удалось подготовить экспорт.'; }
 }
 
 function deleteAll() {
   showConfirm('Удалить все ответы, историю вопросов и настройки? Это действие нельзя отменить.', async () => {
-    await api('/delete-all', { confirmation: 'DELETE' });
+    const fresh = await api('/delete-all', { confirmation: 'DELETE' });
     const storedKeys = Object.keys(localStorage).filter((key) => key.startsWith(prefix));
     storedKeys.forEach((key) => localStorage.removeItem(key));
     try { if (storedKeys.length) tg?.CloudStorage?.removeItems(storedKeys, () => {}); } catch {}
     history = []; progress = 0; saved = false; answer = ''; answerEl.value = '';
+    if (Number.isInteger(fresh.questionId) && fresh.question) {
+      index = fresh.questionId;
+      currentQuestion = fresh.question;
+      revealedQuestion = '';
+    }
     renderHistory(); render();
+    setStatus('Личные данные удалены. Для тебя выбран новый вопрос.', 'success');
   });
 }
 
@@ -320,6 +325,113 @@ function download(blob, name) {
   const link = document.createElement('a');
   link.href = url; link.download = name; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function bytes(text) { return new TextEncoder().encode(text); }
+
+function concatBytes(parts) {
+  const size = parts.reduce((sum, part) => sum + part.length, 0);
+  const result = new Uint8Array(size); let offset = 0;
+  parts.forEach((part) => { result.set(part, offset); offset += part.length; });
+  return result;
+}
+
+function jpegBytes(dataUrl) {
+  const binary = atob(dataUrl.split(',')[1]);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function imagePdf(images) {
+  const pageCount = images.length;
+  const objectCount = 2 + pageCount * 3;
+  const objects = new Array(objectCount + 1);
+  objects[1] = bytes('<< /Type /Catalog /Pages 2 0 R >>');
+  const pageIds = images.map((_image, page) => 3 + page * 3);
+  objects[2] = bytes(`<< /Type /Pages /Count ${pageCount} /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] >>`);
+  images.forEach((image, page) => {
+    const pageId = 3 + page * 3, imageId = pageId + 1, contentId = pageId + 2;
+    const stream = bytes('q 595 0 0 842 0 0 cm /PageImage Do Q');
+    objects[pageId] = bytes(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /PageImage ${imageId} 0 R >> >> /Contents ${contentId} 0 R >>`);
+    objects[imageId] = concatBytes([bytes(`<< /Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${image.data.length} >>\nstream\n`), image.data, bytes('\nendstream')]);
+    objects[contentId] = concatBytes([bytes(`<< /Length ${stream.length} >>\nstream\n`), stream, bytes('\nendstream')]);
+  });
+  const parts = [bytes('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')], offsets = new Array(objectCount + 1).fill(0);
+  let length = parts[0].length;
+  for (let id = 1; id <= objectCount; id += 1) {
+    offsets[id] = length;
+    const object = concatBytes([bytes(`${id} 0 obj\n`), objects[id], bytes('\nendobj\n')]);
+    parts.push(object); length += object.length;
+  }
+  const xrefAt = length;
+  const xref = `xref\n0 ${objectCount + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n `).join('\n')}\ntrailer\n<< /Size ${objectCount + 1} /Root 1 0 R >>\nstartxref\n${xrefAt}\n%%EOF`;
+  parts.push(bytes(xref));
+  return new Blob([concatBytes(parts)], { type: 'application/pdf' });
+}
+
+async function createBrandedPdf(answers) {
+  const width = 1240, height = 1754, margin = 105, bottom = 150;
+  const pages = []; let canvas; let ctx; let y;
+  const newPage = () => {
+    canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#f8f4eb'); gradient.addColorStop(1, '#e3eddc');
+    ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#1e251a'; ctx.font = '500 82px Georgia'; ctx.fillText('365', margin, 125);
+    ctx.fillStyle = '#547b35'; ctx.font = '700 28px Arial'; ctx.fillText('К СЕБЕ · ЛИЧНАЯ ИСТОРИЯ', margin, 175);
+    ctx.strokeStyle = '#a9b99d'; ctx.beginPath(); ctx.moveTo(margin, 215); ctx.lineTo(width - margin, 215); ctx.stroke();
+    y = 280;
+  };
+  const finishPage = () => {
+    ctx.fillStyle = '#687064'; ctx.font = '24px Arial';
+    ctx.fillText(`Экспортировано ${new Intl.DateTimeFormat('ru-RU').format(new Date())}`, margin, height - 72);
+    pages.push({ data: jpegBytes(canvas.toDataURL('image/jpeg', .9)), width, height });
+  };
+  const linesFor = (text, maxWidth, font) => {
+    ctx.font = font; const lines = []; let line = '';
+    String(text || '').split(/\s+/).forEach((word) => {
+      const next = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(next).width > maxWidth) { lines.push(line); line = word; } else line = next;
+    });
+    if (line) lines.push(line); return lines;
+  };
+  newPage();
+  if (!answers.length) {
+    ctx.fillStyle = '#1e251a'; ctx.font = '500 42px Georgia'; ctx.fillText('Сохранённых ответов пока нет.', margin, y);
+  }
+  answers.forEach((item) => {
+    const questionLines = linesFor(item.question, width - margin * 2, '500 35px Georgia');
+    const answerLines = linesFor(item.answer, width - margin * 2, '28px Arial');
+    const blockHeight = 58 + questionLines.length * 49 + answerLines.length * 42 + 62;
+    if (y + blockHeight > height - bottom && y > 300) { finishPage(); newPage(); }
+    ctx.fillStyle = '#547b35'; ctx.font = '700 23px Arial'; ctx.fillText(formatDate(item.date).toUpperCase(), margin, y); y += 50;
+    ctx.fillStyle = '#1e251a'; ctx.font = '500 35px Georgia'; questionLines.forEach((line) => { ctx.fillText(line, margin, y); y += 49; });
+    y += 12; ctx.fillStyle = '#4f574b'; ctx.font = '28px Arial'; answerLines.forEach((line) => { ctx.fillText(line, margin, y); y += 42; });
+    y += 34; ctx.strokeStyle = '#c6d0be'; ctx.beginPath(); ctx.moveTo(margin, y); ctx.lineTo(width - margin, y); ctx.stroke(); y += 40;
+  });
+  finishPage();
+  return imagePdf(pages);
+}
+
+function selectedShareText() {
+  if (shareKind === 'thought') return shareThought || POSTSCRIPTS[index];
+  if (shareKind === 'custom') return $('#custom-share-text').value.trim();
+  return currentQuestion;
+}
+
+function updateSharePreview() {
+  const labels = { question: 'Вопрос дня', thought: 'Мысль дня', custom: 'Твоя мысль' };
+  const text = selectedShareText();
+  $('#postcard-label').textContent = labels[shareKind];
+  $('#postcard-question').textContent = text || 'Здесь появится твой текст';
+  $('#custom-share-wrap').hidden = shareKind !== 'custom';
+  $('#make-card').disabled = !text;
+  $$('[data-share-kind]').forEach((button) => button.classList.toggle('active', button.dataset.shareKind === shareKind));
+}
+
+function openShare(kind = 'question', thought = '') {
+  shareKind = kind; shareThought = thought;
+  updateSharePreview(); openModal('#share-modal');
 }
 
 async function shareCard(text, label, filename) {
@@ -419,9 +531,10 @@ $('#save-time').onclick = async () => {
   } finally { $('#save-time').disabled = false; }
 };
 $$('.presets button').forEach((button) => button.onclick = () => { $('#notify-time').value = button.textContent; });
-$('#share').onclick = () => openModal('#share-modal');
-$('#make-card').onclick = () => shareCard(currentQuestion, 'ВОПРОС ДНЯ', '365-vopros.png');
-$('#share-reflection').onclick = () => shareCard(POSTSCRIPTS[index], 'МЫСЛЬ ДНЯ', '365-mysl.png');
+$('#share').onclick = () => openShare('question');
+$$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
+$('#custom-share-text').addEventListener('input', updateSharePreview);
+$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : 'ТВОЯ МЫСЛЬ', '365-k-sebe.png');
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;

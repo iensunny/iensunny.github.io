@@ -37,9 +37,15 @@ body.keyboard-open .quick-actions { display: none; }
 .bottom-nav button[aria-current="page"] { color: var(--accent); font-weight: 700; }
 .progress-label { position: relative; z-index: 2; }
 .progress-block { position: relative; }
+.question-position { display: flex; align-items: baseline; justify-content: space-between; margin: 0 3px 20px; color: var(--muted); font-size: 12px; }
+.question-position strong { color: var(--accent); font-family: var(--font-lora), Georgia, serif; font-size: 28px; font-weight: 500; line-height: 1; }
 .sun-glow { top: 1.5rem; right: -6rem; opacity: .45; }
 .theme-night .sun-glow { top: 1.7rem; right: 1.4rem; }
 .quick-actions { grid-template-columns: 1fr; }
+.share-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 16px 0 10px; }
+.share-choices button { min-height: 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 700; }
+.share-choices button.active { border-color: var(--accent); background: var(--pill); color: var(--accent); }
+.share-launch { width: 100%; }
 .answer-button:focus-visible, .secondary-button:focus-visible, .danger-button:focus-visible, .bottom-nav button:focus-visible, .modal-close:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 360px) {
   .app-content { padding-left: 12px; padding-right: 12px; }
