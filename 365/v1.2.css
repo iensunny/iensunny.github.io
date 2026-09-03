@@ -6,6 +6,15 @@
 .save-status { min-height: 20px; margin: 8px 4px 0; color: var(--muted); font-size: 11px; line-height: 1.4; }
 .save-status.error { color: #a33b2e; }
 .save-status.success { color: var(--accent); }
+.question-card h1 { animation: none; }
+.question-word { display: inline; opacity: 0; filter: blur(3px); animation: word-reveal .62s cubic-bezier(.22, 1, .36, 1) var(--word-delay) forwards; }
+@keyframes word-reveal { to { opacity: 1; filter: blur(0); } }
+body.keyboard-open .bottom-nav { display: none; }
+body.keyboard-open .app-content { padding-bottom: 28px; }
+body.keyboard-open .question-card { padding-bottom: 18px; }
+body.keyboard-open .question-card h1 { min-height: auto; margin-bottom: 14px; }
+body.keyboard-open .quick-actions { display: none; }
+#answer { scroll-margin-block: 24px; }
 .secondary-button, .danger-button { min-height: 44px; width: 100%; border-radius: 14px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
 .secondary-button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .danger-button { border: 1px solid #b34a3d66; background: #b34a3d14; color: #a73b30; }
@@ -39,4 +48,7 @@
   .bottom-nav button { font-size: 13px; }
   .modal-sheet { padding-left: 18px; padding-right: 18px; }
   .confirm-actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .question-word { opacity: 1; filter: none; animation: none; }
 }

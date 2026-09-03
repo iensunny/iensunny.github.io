@@ -22,6 +22,7 @@ let activeEdit = null;
 let confirmHandler = null;
 let lastFocused = null;
 let saveLocked = false;
+let revealedQuestion = '';
 
 const app = $('#app');
 const answerEl = $('#answer');
@@ -30,6 +31,27 @@ const saveStatus = $('#save-status');
 function setStatus(text = '', kind = '') {
   saveStatus.textContent = text;
   saveStatus.className = `save-status ${kind}`.trim();
+}
+
+function renderQuestion(question) {
+  const heading = $('#question');
+  if (revealedQuestion === question) return;
+  revealedQuestion = question;
+  heading.textContent = '';
+  heading.setAttribute('aria-label', question);
+  question.split(/(\s+)/).forEach((part, position) => {
+    if (!part) return;
+    if (/^\s+$/.test(part)) {
+      heading.append(document.createTextNode(part));
+      return;
+    }
+    const word = document.createElement('span');
+    word.className = 'question-word';
+    word.setAttribute('aria-hidden', 'true');
+    word.style.setProperty('--word-delay', `${Math.min(position * 55, 1100)}ms`);
+    word.textContent = part;
+    heading.append(word);
+  });
 }
 
 function persist(key, value) {
@@ -78,7 +100,7 @@ function render() {
   $('#percent').textContent = `${pct}%`;
   $('#bar').style.width = `${(progress / QUESTIONS.length) * 100}%`;
   $('#number').textContent = `Вопрос ${Math.min(progress + (saved ? 0 : 1), QUESTIONS.length)} из ${QUESTIONS.length}`;
-  $('#question').textContent = question;
+  renderQuestion(question);
   $('#postcard-question').textContent = question;
   $('#postcard-meta').textContent = `365: к себе · вопрос ${index + 1}`;
   $('#slow-down').hidden = saved;
@@ -360,8 +382,25 @@ async function boot() {
   render();
 }
 
+function updateViewport() {
+  const viewport = window.visualViewport;
+  const height = Math.round(viewport?.height || tg?.viewportHeight || window.innerHeight);
+  document.documentElement.style.setProperty('--app-height', `${height}px`);
+  const keyboardOpen = Boolean(viewport && window.innerHeight - viewport.height > 120);
+  document.body.classList.toggle('keyboard-open', keyboardOpen);
+  if (keyboardOpen && document.activeElement === answerEl) {
+    requestAnimationFrame(() => answerEl.scrollIntoView({ block: 'center', behavior: 'smooth' }));
+  }
+}
+
 let draftTimer;
 answerEl.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 250); answer = answerEl.value; render(); });
+answerEl.addEventListener('focus', () => setTimeout(() => { updateViewport(); answerEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 180));
+answerEl.addEventListener('blur', () => setTimeout(updateViewport, 120));
+window.visualViewport?.addEventListener('resize', updateViewport);
+window.visualViewport?.addEventListener('scroll', updateViewport);
+try { tg?.onEvent?.('viewportChanged', updateViewport); } catch {}
+updateViewport();
 $('#submit').onclick = submit;
 $('#nav-home').onclick = () => setView('home');
 $('#nav-answers').onclick = () => setView('answers');
