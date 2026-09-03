@@ -18,16 +18,22 @@
       href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=3" />
+    <link rel="stylesheet" href="style.css?v=4" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
       :root {
         --font-manrope: 'Manrope', system-ui, sans-serif;
         --font-lora: 'Lora', Georgia, serif;
+        --app-height: 100dvh;
       }
+      html,
       body {
         margin: 0;
+        min-height: var(--app-height);
         font-family: var(--font-manrope);
+      }
+      .app-shell {
+        min-height: var(--app-height);
       }
     </style>
   </head>
@@ -157,6 +163,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app.js?v=3"></script>
+    <script type="module" src="app.js?v=4"></script>
   </body>
 </html>
