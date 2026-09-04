@@ -42,21 +42,8 @@ function renderQuestion(question) {
   const heading = $('#question');
   if (revealedQuestion === question) return;
   revealedQuestion = question;
-  heading.textContent = '';
+  heading.textContent = question;
   heading.setAttribute('aria-label', question);
-  question.split(/(\s+)/).forEach((part, position) => {
-    if (!part) return;
-    if (/^\s+$/.test(part)) {
-      heading.append(document.createTextNode(part));
-      return;
-    }
-    const word = document.createElement('span');
-    word.className = 'question-word';
-    word.setAttribute('aria-hidden', 'true');
-    word.style.setProperty('--word-delay', `${Math.min(position * 55, 1100)}ms`);
-    word.textContent = part;
-    heading.append(word);
-  });
 }
 
 function persist(key, value) {
@@ -512,7 +499,16 @@ function applyTheme() {
 }
 
 async function boot() {
-  try { tg?.ready?.(); tg?.expand?.(); } catch {}
+  const launchedFromHomeScreen = navigator.standalone === true || window.matchMedia?.('(display-mode: standalone)').matches;
+  if (!isTelegram && launchedFromHomeScreen) {
+    window.location.replace(`${BOT_LINK}?startapp&mode=fullscreen`);
+    return;
+  }
+  try {
+    tg?.ready?.();
+    tg?.expand?.();
+    if (typeof tg?.requestFullscreen === 'function') tg.requestFullscreen();
+  } catch {}
   applyTheme();
   $('#demo-banner').hidden = isTelegram;
   if (!isTelegram) {
