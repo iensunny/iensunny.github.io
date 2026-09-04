@@ -1,8 +1,8 @@
-import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=22';
+import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const API_URL = 'https://questions-365-bot.iensunny-365.workers.dev';
 const BOT_LINK = 'https://t.me/qqwestionsBot';
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const tg = window.Telegram?.WebApp;
@@ -457,7 +457,16 @@ function openShare(kind = 'question', thought = '') {
   updateSharePreview(); openModal('#share-modal');
 }
 
-async function shareCard(text, label, filename, includeNumber = false) {
+function blobDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function shareCard(text, label, filename, includeNumber = false, destination = 'chat') {
   const canvas = document.createElement('canvas');
   canvas.width = 1080; canvas.height = 1350;
   const ctx = canvas.getContext('2d');
@@ -476,6 +485,28 @@ async function shareCard(text, label, filename, includeNumber = false) {
   ctx.fillStyle = '#53604c'; ctx.font = '600 25px Arial'; ctx.fillText('365: К СЕБЕ', 540, 1220);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   analytics('postcard_created', { cardType: shareKind, questionId: index });
+  if (destination === 'story') {
+    const button = $('#story-card');
+    button.disabled = true;
+    $('#share-status').textContent = 'Готовим историю…';
+    try {
+      if (typeof tg?.shareToStory !== 'function') throw new Error('stories_not_supported');
+      const image = await blobDataUrl(blob);
+      const uploaded = await api('/story-card', { image, questionId: index, cardType: shareKind });
+      tg.shareToStory(uploaded.url, {
+        text: '365 · к себе — один бережный вопрос в день',
+        widget_link: { url: BOT_LINK, name: 'Открыть вопрос' },
+      });
+      analytics('story_shared', { cardType: shareKind, questionId: index });
+      $('#share-status').textContent = 'Открываем редактор истории…';
+    } catch (error) {
+      analytics('client_error', { errorType: error.message === 'stories_not_supported' ? 'stories_not_supported' : 'story_share_failed' });
+      $('#share-status').textContent = error.message === 'stories_not_supported' ? 'Обнови Telegram, чтобы публиковать открытки в историях.' : 'Не удалось открыть историю. Попробуй ещё раз.';
+    } finally {
+      button.disabled = false;
+    }
+    return;
+  }
   const file = new File([blob], filename, { type: 'image/png' });
   try {
     if (navigator.canShare?.({ files: [file] })) {
@@ -588,7 +619,9 @@ $$('.presets button').forEach((button) => button.onclick = () => { $('#notify-ti
 $('#share').onclick = () => openShare('question');
 $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
 $('#custom-share-text').addEventListener('input', updateSharePreview);
-$('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png', shareKind !== 'custom');
+const shareCardArgs = () => [selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png', shareKind !== 'custom'];
+$('#make-card').onclick = () => shareCard(...shareCardArgs(), 'chat');
+$('#story-card').onclick = () => shareCard(...shareCardArgs(), 'story');
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;
