@@ -1,7 +1,8 @@
-import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=21';
+import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=22';
 
 const API_URL = 'https://questions-365-bot.iensunny-365.workers.dev';
 const BOT_LINK = 'https://t.me/qqwestionsBot';
+const APP_VERSION = 'v22';
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const tg = window.Telegram?.WebApp;
@@ -26,6 +27,7 @@ let saveLocked = false;
 let revealedQuestion = '';
 let shareKind = 'question';
 let shareThought = '';
+let answerStartedTracked = false;
 
 const app = $('#app');
 const answerEl = $('#answer');
@@ -75,6 +77,20 @@ async function api(path, data = {}) {
   });
   if (!response.ok) throw new Error(`${path}: ${response.status}`);
   return response.json();
+}
+
+function analytics(event, metadata = {}) {
+  if (!isTelegram) return;
+  fetch(API_URL + '/events', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      event,
+      source: 'mini_app',
+      metadata: { ...metadata, appVersion: APP_VERSION, platform: tg.platform || 'unknown', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+      initData: tg.initData,
+    }),
+  }).catch(() => {});
 }
 
 function localHistory() {
@@ -204,6 +220,7 @@ async function submit() {
     setStatus('Ответ сохранён', 'success');
     tg?.HapticFeedback?.notificationOccurred?.('success');
   } catch {
+    analytics('client_error', { errorType: 'answer_save_failed', questionId: index });
     setStatus('Не удалось сохранить. Текст остался здесь — можно попробовать ещё раз.', 'error');
   } finally {
     saveLocked = false;
@@ -291,7 +308,8 @@ async function exportData() {
     const data = await api('/export');
     const pdf = await createBrandedPdf(Array.isArray(data.answers) ? data.answers : []);
     download(pdf, '365-k-sebe-otvety.pdf');
-  } catch { $('#save-status').textContent = 'Не удалось подготовить экспорт.'; }
+    analytics('pdf_created');
+  } catch { analytics('client_error', { errorType: 'pdf_failed' }); $('#save-status').textContent = 'Не удалось подготовить экспорт.'; }
 }
 
 function deleteAll() {
@@ -435,6 +453,7 @@ function updateSharePreview() {
 
 function openShare(kind = 'question', thought = '') {
   shareKind = kind; shareThought = thought;
+  analytics('postcard_opened', { cardType: kind, questionId: index });
   updateSharePreview(); openModal('#share-modal');
 }
 
@@ -456,14 +475,17 @@ async function shareCard(text, label, filename, includeNumber = false) {
   lines.forEach((line) => { ctx.fillText(line, 540, y); y += lineHeight; });
   ctx.fillStyle = '#53604c'; ctx.font = '600 25px Arial'; ctx.fillText('365: К СЕБЕ', 540, 1220);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  analytics('postcard_created', { cardType: shareKind, questionId: index });
   const file = new File([blob], filename, { type: 'image/png' });
   try {
     if (navigator.canShare?.({ files: [file] })) {
       await navigator.share({ title: '365: к себе', text: BOT_LINK, files: [file] });
+      analytics('postcard_shared', { cardType: shareKind, questionId: index });
       return;
     }
   } catch (error) { if (error.name === 'AbortError') return; }
   download(blob, filename);
+  analytics('postcard_downloaded', { cardType: shareKind, questionId: index });
 }
 
 function applyTheme() {
@@ -513,7 +535,7 @@ async function boot() {
       if (data.answer) answer = data.answer;
       saveLocalHistory();
     }
-  } catch { setStatus('Нет связи с сервером. Черновик можно продолжить; сохранение станет доступно после подключения.', 'error'); }
+  } catch { analytics('client_error', { errorType: 'boot_connection_failed' }); setStatus('Нет связи с сервером. Черновик можно продолжить; сохранение станет доступно после подключения.', 'error'); }
   render();
 }
 
@@ -529,7 +551,13 @@ function updateViewport() {
 }
 
 let draftTimer;
-answerEl.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 250); answer = answerEl.value; render(); });
+answerEl.addEventListener('input', () => {
+  if (!answerStartedTracked && answerEl.value.trim()) {
+    answerStartedTracked = true;
+    analytics('answer_started', { questionId: index });
+  }
+  clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 250); answer = answerEl.value; render();
+});
 answerEl.addEventListener('focus', () => setTimeout(() => { updateViewport(); answerEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 180));
 answerEl.addEventListener('blur', () => setTimeout(updateViewport, 120));
 window.visualViewport?.addEventListener('resize', updateViewport);
