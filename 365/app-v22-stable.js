@@ -44,6 +44,13 @@ function renderQuestion(question) {
   revealedQuestion = question;
   heading.textContent = question;
   heading.setAttribute('aria-label', question);
+  if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches && typeof heading.animate === 'function') {
+    heading.getAnimations().forEach((animation) => animation.cancel());
+    heading.animate([
+      { opacity: 0, filter: 'blur(3px)', transform: 'translateY(10px)' },
+      { opacity: 1, filter: 'blur(0)', transform: 'translateY(0)' },
+    ], { duration: 1400, delay: 120, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+  }
 }
 
 function persist(key, value) {
