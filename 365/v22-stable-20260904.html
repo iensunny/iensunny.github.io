@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f4f0e8" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="365: к себе" />
+    <meta property="og:description" content="Один бережный вопрос в день" />
+    <meta property="og:image" content="https://iensunny.github.io/365/og-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>365: к себе</title>
+    <meta
+      name="description"
+      content="Один вопрос в день для лучшего понимания себя и внутренней устойчивости"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css?v=12" />
+    <link rel="stylesheet" href="v1.2.css?v=20" />
+    <style>#question, #question .question-word { opacity: 1 !important; filter: none !important; animation: none !important; }</style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      (() => {
+        const hour = new Date().getHours();
+        const theme = hour >= 5 && hour < 11 ? 'morning' : hour >= 11 && hour < 17 ? 'day' : hour >= 17 && hour < 22 ? 'evening' : 'night';
+        document.documentElement.dataset.timeTheme = theme;
+        const colors = { morning: '#fff4d8', day: '#edf4e9', evening: '#f7dbc5', night: '#091622' };
+        document.querySelector('meta[name="theme-color"]').content = colors[theme];
+      })();
+    </script>
+    <style>
+      :root {
+        --font-manrope: 'Manrope', system-ui, sans-serif;
+        --font-lora: 'Lora', Georgia, serif;
+        --app-height: 100%;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
+        font-family: var(--font-manrope);
+        background: transparent;
+      }
+      body {
+        position: fixed;
+        inset: 0;
+      }
+      .app-shell {
+        height: var(--app-height);
+        max-height: var(--app-height);
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+      html[data-time-theme='morning'], html[data-time-theme='morning'] body { background: #fff4d8 !important; }
+      html[data-time-theme='morning'] .app-shell { --bg:#fff4d8; --ink:#282318; --muted:#746c59; --card:#fffaf0; --accent:#8a6b28; --accent-2:#b69648; --pill:#f5e8bd; --line:#917b4933; --surface:#fffaf0; color:#282318 !important; background:#fff4d8 !important; }
+      html[data-time-theme='day'], html[data-time-theme='day'] body { background: #edf4e9 !important; }
+      html[data-time-theme='day'] .app-shell { --bg:#edf4e9; --ink:#1e251a; --muted:#657060; --card:#fffdf7; --accent:#3e742c; --accent-2:#71904c; --pill:#e8ecdd; --line:#66765a33; --surface:#fff; color:#1e251a !important; background:#edf4e9 !important; }
+      html[data-time-theme='evening'], html[data-time-theme='evening'] body { background: #f7dbc5 !important; }
+      html[data-time-theme='evening'] .app-shell { --bg:#f7dbc5; --ink:#2a1810; --muted:#765c50; --card:#fff4e9; --accent:#b95124; --accent-2:#d37b4b; --pill:#f8d5bd; --line:#9d5b3d33; --surface:#fff9f3; color:#2a1810 !important; background:#f7dbc5 !important; }
+      html[data-time-theme='night'], html[data-time-theme='night'] body { background: #091622 !important; }
+      html[data-time-theme='night'] .app-shell { --bg:#091622; --ink:#f5f3eb; --muted:#bdc5c9; --card:#162736; --accent:#9ab875; --accent-2:#759460; --pill:#283b31; --line:#dbe8e233; --surface:#122433; color:#f5f3eb !important; background:#091622 !important; color-scheme:dark; }
+      html[data-time-theme='night'] .question-card { background:#162736 !important; border-color:#b9d6df35 !important; }
+      html[data-time-theme='night'] .bottom-nav { background:#0b1a27f5 !important; }
+      html[data-time-theme='night'] .quick-actions button { background:#122433 !important; border-color:#c1d3de30 !important; }
+      .topbar {
+        grid-template-columns: 1fr !important;
+        justify-items: center;
+      }
+      .topbar .brand {
+        text-align: center;
+      }
+      .menu-button,
+      .header-spacer {
+        display: none !important;
+      }
+      .saved-state {
+        padding: 18px 16px !important;
+        gap: 12px !important;
+      }
+      .saved-state b {
+        display: block;
+        margin-bottom: 10px !important;
+        font-size: 18px !important;
+        line-height: 1.4 !important;
+      }
+      .saved-state strong {
+        display: block;
+        margin-bottom: 12px !important;
+        color: var(--accent) !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        line-height: 1.55 !important;
+      }
+      .saved-state span {
+        display: block;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+      }
+      .bottom-nav.three {
+        grid-template-columns: repeat(3, 1fr);
+        height: calc(78px + env(safe-area-inset-bottom)) !important;
+        padding-top: 10px !important;
+      }
+      .bottom-nav button {
+        gap: 4px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.01em;
+      }
+      .bottom-nav button > span:first-child {
+        display: none !important;
+      }
+      .bottom-nav button > span:last-child {
+        font-size: 15px !important;
+      }
+      .postcard-preview {
+        transition:
+          background 0.35s ease,
+          color 0.35s ease,
+          border-color 0.35s ease;
+      }
+      .postcard-preview.theme-morning {
+        background: linear-gradient(160deg, #fff8df, #edf2d8);
+        color: #1e251a;
+        border-color: rgba(84, 123, 53, 0.18);
+      }
+      .postcard-preview.theme-day {
+        background: linear-gradient(160deg, #f3f4e9, #dfead7);
+        color: #1e251a;
+        border-color: rgba(63, 116, 47, 0.18);
+      }
+      .postcard-preview.theme-evening {
+        background: linear-gradient(160deg, #fff0df, #efc3a5);
+        color: #2a1810;
+        border-color: rgba(166, 77, 40, 0.2);
+      }
+      .postcard-preview.theme-night {
+        background: linear-gradient(160deg, #111f2c, #213649);
+        color: #f5f1e8;
+        border-color: rgba(168, 199, 138, 0.22);
+      }
+      .postcard-preview.theme-night small,
+      .postcard-preview.theme-night em {
+        color: #a8c78a;
+      }
+      .postcard-preview.theme-morning small,
+      .postcard-preview.theme-day small {
+        color: #547b35;
+      }
+      .postcard-preview.theme-evening small {
+        color: #a64d28;
+      }
+      #answer-wrap {
+        scroll-margin-bottom: 180px;
+      }
+      #submit {
+        scroll-margin-bottom: 140px;
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <main id="app" class="app-shell theme-day">
+      <div class="paper-grain" aria-hidden="true"></div>
+      <div class="sun-glow" aria-hidden="true"></div>
+      <div class="app-content">
+        <header class="topbar">
+          <div class="brand">
+            <div class="brand-number">365</div>
+            <div class="brand-name">к себе</div>
+          </div>
+        </header>
+        <p class="promise">
+          Один вопрос в день для лучшего понимания себя<br />и внутренней
+          устойчивости
+        </p>
+        <aside id="demo-banner" class="demo-banner" hidden>
+          <strong>Демонстрационный режим</strong>
+          <span>Здесь можно посмотреть приложение, но ответы не сохраняются.</span>
+          <a href="https://t.me/qqwestionsBot">Открыть полную версию в Telegram</a>
+        </aside>
+
+        <section id="home-view">
+          <section class="question-position" aria-label="Номер вопроса">
+            <span>Сегодняшний вопрос</span>
+            <strong id="question-index">#1</strong>
+          </section>
+          <article class="question-card">
+            <span id="number" class="day-pill">Вопрос дня</span>
+            <p class="eyebrow">Вопрос дня</p>
+            <h1 id="question"></h1>
+            <div class="ornament" aria-hidden="true"><i></i><span>❧</span><i></i></div>
+            <p id="slow-down" class="slow-down">Не торопись с ответом.</p>
+            <label id="answer-wrap" class="answer-field">
+              <span class="sr-only">Твой ответ</span>
+              <textarea
+                id="answer"
+                placeholder="Напиши здесь..."
+                rows="3"
+              ></textarea>
+            </label>
+            <div id="saved" class="saved-state" hidden>
+              <div>
+                <b id="gratitude"></b>
+                <strong id="reflection"></strong>
+                <span>Ответ сохранён в истории · следующий вопрос завтра</span>
+              </div>
+            </div>
+            <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
+            <button id="submit" class="answer-button" disabled>
+              <span id="submit-label">Ответить</span><span>→</span>
+            </button>
+          </article>
+          <div class="quick-actions">
+            <button id="share" class="share-launch">
+              <span
+                >Поделиться<br /><small>создать открытку</small></span
+              >
+            </button>
+          </div>
+        </section>
+
+        <section id="answers-view" class="answers-view" hidden>
+          <div class="answers-heading">
+            <p class="eyebrow">Твоя история</p>
+            <h1>Мои ответы</h1>
+            <span id="answers-count">0 сохранено</span>
+          </div>
+          <div id="answers-list" class="answers-list"></div>
+          <div id="answers-empty" class="answers-empty" hidden>
+            <h2>Здесь появятся твои ответы</h2>
+            <p>Ответь на первый вопрос — и начнётся твоя личная история.</p>
+            <button id="back-home" class="modal-primary">Перейти к вопросу</button>
+          </div>
+        </section>
+      </div>
+
+      <nav class="bottom-nav three" aria-label="Основная навигация">
+        <button id="nav-home" class="active" aria-current="page"><span aria-hidden="true"></span><span>вопрос</span></button>
+        <button id="nav-answers"><span aria-hidden="true"></span><span>ответы</span></button>
+        <button id="nav-settings"><span aria-hidden="true"></span><span>настройки</span></button>
+      </nav>
+
+      <div id="settings-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
+          <button class="modal-close close" aria-label="Закрыть">×</button>
+          <span class="modal-icon" aria-hidden="true">◷</span>
+          <h2 id="settings-title">Когда присылать вопрос?</h2>
+          <p>Выбери удобное время. Часовой пояс определяется автоматически.</p>
+          <label class="time-field"
+            ><span>Время сообщения</span
+            ><input id="notify-time" type="time" value="09:00"
+          /></label>
+          <div class="time-presets presets">
+            <button type="button">08:00</button>
+            <button type="button">13:00</button>
+            <button type="button">20:00</button>
+          </div>
+          <button id="save-time" class="modal-primary">Сохранить время</button>
+          <div class="data-settings">
+            <h3>Твои данные</h3>
+            <p>Ответы хранятся в базе приложения после проверки Telegram-профиля. Черновик и резервная история также сохраняются на устройстве и в Telegram Cloud Storage. Эти данные не публикуются.</p>
+            <button id="export-data" class="secondary-button">Экспортировать ответы</button>
+            <button id="delete-data" class="danger-button">Удалить все личные данные</button>
+          </div>
+        </section>
+      </div>
+
+      <div id="share-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title" tabindex="-1">
+          <button class="modal-close close" aria-label="Закрыть">×</button>
+          <div id="postcard-preview" class="postcard-preview theme-day">
+            <strong>365</strong><span>к себе</span><small id="postcard-label">Вопрос дня</small>
+            <p id="postcard-question"></p>
+            <em id="postcard-meta">365: к себе · #1</em>
+          </div>
+          <h2 id="share-title">Что поместить на открытку?</h2>
+          <div class="share-choices" role="group" aria-label="Содержание открытки">
+            <button type="button" data-share-kind="question" class="active">Вопрос</button>
+            <button type="button" data-share-kind="thought">Мысль</button>
+            <button type="button" data-share-kind="custom">Свой текст</button>
+          </div>
+          <label id="custom-share-wrap" class="edit-field" hidden><span>Текст открытки</span><textarea id="custom-share-text" rows="3" maxlength="500" placeholder="Напиши свой текст..."></textarea></label>
+          <p>Личный ответ не добавляется автоматически. Сначала проверь открытку выше.</p>
+          <button id="make-card" class="modal-primary">Поделиться открыткой</button>
+        </section>
+      </div>
+
+      <div id="edit-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="edit-title" tabindex="-1">
+          <button class="modal-close close" aria-label="Закрыть">×</button>
+          <h2 id="edit-title">Редактировать ответ</h2>
+          <label class="edit-field"><span>Твой ответ</span><textarea id="edit-answer" rows="6"></textarea></label>
+          <p id="edit-status" class="save-status" role="status" aria-live="polite"></p>
+          <button id="save-edit" class="modal-primary">Сохранить изменения</button>
+        </section>
+      </div>
+
+      <div id="confirm-modal" class="modal-backdrop" hidden>
+        <section class="modal-sheet" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-copy" tabindex="-1">
+          <h2 id="confirm-title">Подтвердить действие</h2>
+          <p id="confirm-copy"></p>
+          <div class="confirm-actions">
+            <button id="confirm-cancel" class="secondary-button">Отмена</button>
+            <button id="confirm-action" class="danger-button">Удалить</button>
+          </div>
+        </section>
+      </div>
+
+      <div id="toast" class="toast" hidden role="status"></div>
+    </main>
+    <script type="module" src="app-v22-stable.js?v=2"></script>
+  </body>
+</html>
