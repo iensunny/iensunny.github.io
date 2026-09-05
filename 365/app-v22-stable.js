@@ -135,11 +135,17 @@ function render() {
   if (saved) {
     $('#gratitude').textContent = 'Спасибо, что сохранил эту мысль.';
     $('#reflection').textContent = currentPostscript;
-    $('#submit-label').textContent = 'Посмотреть в истории';
+    $('#submit-label').textContent = 'Поделиться';
     $('#submit').disabled = false;
+    $('#share-label').textContent = 'Посмотреть в истории';
+    $('#share-caption').textContent = 'вернуться к ответу';
+    $('#share').classList.add('history-link');
   } else {
     $('#submit-label').textContent = isTelegram ? 'Ответить' : 'Открыть в Telegram';
     $('#submit').disabled = isTelegram ? !answer.trim() || saveLocked : false;
+    $('#share-label').textContent = 'Поделиться';
+    $('#share-caption').textContent = 'создать открытку';
+    $('#share').classList.remove('history-link');
   }
 }
 
@@ -209,7 +215,7 @@ function newRequestId() {
 
 async function submit() {
   if (!isTelegram) { location.href = BOT_LINK; return; }
-  if (saved) { setView('answers'); return; }
+  if (saved) { openShare('question'); return; }
   const text = answer.trim();
   if (!text || saveLocked) return;
   saveLocked = true;
@@ -469,21 +475,29 @@ function openShare(kind = 'question', thought = '') {
 
 async function shareCard(text, label, filename, includeNumber = false) {
   const canvas = document.createElement('canvas');
-  canvas.width = 1080; canvas.height = 1350;
+  canvas.width = 1080; canvas.height = 1920;
   const ctx = canvas.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 1080, 1350);
-  gradient.addColorStop(0, '#f4f0e8'); gradient.addColorStop(1, '#dfead7');
-  ctx.fillStyle = gradient; ctx.fillRect(0, 0, 1080, 1350);
-  ctx.textAlign = 'center'; ctx.fillStyle = '#1e251a'; ctx.font = '400 118px Georgia'; ctx.fillText('365', 540, 180);
-  ctx.fillStyle = '#547b35'; ctx.font = '700 28px Arial'; ctx.fillText(label, 540, 300);
+  const theme = document.body.dataset.timeTheme || 'day';
+  const palettes = {
+    morning: { start: '#fff8df', end: '#edf2d8', ink: '#282318', accent: '#8a6b28', muted: '#746c59' },
+    day: { start: '#f3f4e9', end: '#dfead7', ink: '#1e251a', accent: '#547b35', muted: '#53604c' },
+    evening: { start: '#fff0e4', end: '#f4c9ad', ink: '#2a1810', accent: '#b95124', muted: '#765c50' },
+    night: { start: '#0b1a27', end: '#213649', ink: '#f5f3eb', accent: '#a8c78a', muted: '#bdc5c9' },
+  };
+  const palette = palettes[theme] || palettes.day;
+  const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
+  gradient.addColorStop(0, palette.start); gradient.addColorStop(1, palette.end);
+  ctx.fillStyle = gradient; ctx.fillRect(0, 0, 1080, 1920);
+  ctx.textAlign = 'center'; ctx.fillStyle = palette.ink; ctx.font = '400 118px Georgia'; ctx.fillText('365', 540, 250);
+  ctx.fillStyle = palette.accent; ctx.font = '700 28px Arial'; ctx.fillText(label, 540, 390);
   if (includeNumber) {
-    ctx.fillStyle = '#6b765f'; ctx.font = '600 25px Arial'; ctx.fillText(`#${index + 1}`, 540, 350);
+    ctx.fillStyle = palette.muted; ctx.font = '600 25px Arial'; ctx.fillText(`#${index + 1}`, 540, 440);
   }
-  ctx.fillStyle = '#1e251a'; ctx.font = `500 ${text.length > 150 ? 47 : 56}px Georgia`;
+  ctx.fillStyle = palette.ink; ctx.font = `500 ${text.length > 150 ? 47 : 56}px Georgia`;
   const lines = wrapText(ctx, text, 820); const lineHeight = text.length > 150 ? 66 : 76;
-  let y = 700 - ((lines.length - 1) * lineHeight) / 2;
+  let y = 980 - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((line) => { ctx.fillText(line, 540, y); y += lineHeight; });
-  ctx.fillStyle = '#53604c'; ctx.font = '600 25px Arial'; ctx.fillText('365: К СЕБЕ', 540, 1220);
+  ctx.fillStyle = palette.muted; ctx.font = '600 25px Arial'; ctx.fillText('365: К СЕБЕ', 540, 1740);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   analytics('postcard_created', { cardType: shareKind, questionId: index });
   const file = new File([blob], filename, { type: 'image/png' });
@@ -543,7 +557,10 @@ async function boot() {
   }
   restoreDraft();
   try {
-    const data = await api('/daily-question', { source: tg.initDataUnsafe?.start_param || 'direct' });
+    const data = await api('/daily-question', {
+      source: tg.initDataUnsafe?.start_param || 'direct',
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
     if (!data.complete && Number.isInteger(data.questionId)) {
       index = data.questionId;
       currentQuestion = data.question || QUESTIONS[index];
@@ -604,7 +621,7 @@ $('#save-time').onclick = async () => {
   } finally { $('#save-time').disabled = false; }
 };
 $$('.presets button').forEach((button) => button.onclick = () => { $('#notify-time').value = button.textContent; });
-$('#share').onclick = () => openShare('question');
+$('#share').onclick = () => saved ? setView('answers') : openShare('question');
 $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
 $('#custom-share-text').addEventListener('input', updateSharePreview);
 $('#make-card').onclick = () => shareCard(selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png', shareKind !== 'custom');
