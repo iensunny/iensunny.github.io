@@ -180,6 +180,12 @@
       #submit {
         scroll-margin-bottom: 140px;
       }
+      .quick-actions .share-launch.history-link {
+        background: transparent;
+        border-color: var(--line);
+        box-shadow: none;
+        color: var(--muted);
+      }
     </style>
   </head>
   <body class="antialiased">
@@ -236,9 +242,7 @@
           </article>
           <div class="quick-actions">
             <button id="share" class="share-launch">
-              <span
-                >Поделиться<br /><small>создать открытку</small></span
-              >
+              <span><b id="share-label">Поделиться</b><br /><small id="share-caption">создать открытку</small></span>
             </button>
           </div>
         </section>
@@ -332,6 +336,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app-v22-stable.js?v=4"></script>
+    <script type="module" src="app-v22-stable.js?v=5"></script>
   </body>
 </html>
