@@ -1,4 +1,4 @@
-import { createPhotoCard } from './photo-card.js?v=20260908-3';
+import { createPhotoCard } from './photo-card.js?v=20260908-4';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
@@ -258,11 +258,17 @@ function openModal(id) {
   $('.app-content').inert = true;
   $('.bottom-nav').inert = true;
   const sheet = $('.modal-sheet', backdrop);
+  if (id === '#share-modal') {
+    try { tg?.expand?.(); tg?.disableVerticalSwipes?.(); } catch {}
+  }
   requestAnimationFrame(() => sheet.focus());
 }
 
 function closeModal(backdrop) {
   backdrop.hidden = true;
+  if (backdrop.id === 'share-modal') {
+    try { tg?.enableVerticalSwipes?.(); } catch {}
+  }
   if (!$$('.modal-backdrop').some((item) => !item.hidden)) {
     $('.app-content').inert = false;
     $('.bottom-nav').inert = false;

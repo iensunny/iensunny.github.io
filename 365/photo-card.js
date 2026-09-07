@@ -106,7 +106,7 @@ export function createPhotoCard({ onChange, getText }) {
     if (button.dataset.shareKind === 'custom') setTimeout(editText, 0);
   }));
   const style = document.createElement('style');
-  style.textContent = '[data-photo-options] select{display:block;width:100%;margin-top:6px;padding:10px 4px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}[data-photo-options] input{max-width:100%}.share-sheet{max-height:calc(100dvh - 40px);overflow-y:auto}.share-sheet canvas[hidden]{display:none}';
+  style.textContent = '[data-photo-options] select{display:block;width:100%;margin-top:6px;padding:10px 4px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}[data-photo-options] input{max-width:100%}.share-sheet{max-height:calc(100dvh - 40px);overflow-y:auto}.share-sheet.object-selected{overflow:hidden;overscroll-behavior:none;touch-action:none}.share-sheet canvas[hidden]{display:none}';
   document.head.append(style);
   const options = controls.querySelector('[data-photo-options]');
   const status = controls.querySelector('[data-photo-status]');
@@ -228,6 +228,7 @@ export function createPhotoCard({ onChange, getText }) {
     preview.hidden = active; stage.hidden = !active; canvas.hidden = !active; options.hidden = !active;
     canvas.setAttribute('aria-label', `365: к себе. ${getText()}`);
     if (active) render(canvas, getText());
+    canvas.closest('.share-sheet')?.classList.toggle('object-selected', active && selected !== 'photo' && editor.hidden);
     backdrop.parentElement.hidden = !photo;
     modes.querySelector('[data-card-mode=brand]').hidden = !photo;
     if (!editor.hidden && textLayout) {
@@ -302,6 +303,7 @@ export function createPhotoCard({ onChange, getText }) {
     } else if (pointers.size === 1) {
       const pressed = hit(p);
       if (selected !== 'photo') {
+        event.preventDefault();
         if (pressed !== 'photo') selected = pressed;
         dragging = {id:event.pointerId, p, x:positions[selected].x, y:positions[selected].y};
         press = {id:event.pointerId, p, background:pressed === 'photo', moved:false};
@@ -320,6 +322,7 @@ export function createPhotoCard({ onChange, getText }) {
   };
   canvas.onpointermove = event => {
     if (!pointers.has(event.pointerId)) return;
+    if (selected !== 'photo') event.preventDefault();
     const p = point(event); pointers.set(event.pointerId,p);
     if (pointers.size === 1 && scrollGesture?.id === event.pointerId) {
       const sheet = canvas.closest('.share-sheet');
@@ -368,6 +371,9 @@ export function createPhotoCard({ onChange, getText }) {
     if (tap && !deselect) editText();
   }
   canvas.onpointerup = canvas.onpointercancel = canvas.onlostpointercapture = end;
+  canvas.addEventListener('touchmove', event => {
+    if (selected !== 'photo') event.preventDefault();
+  }, {passive:false});
   canvas.addEventListener('wheel', event => {
     if (loading || (!event.ctrlKey && !event.metaKey)) return;
     event.preventDefault(); selected = hit(point(event));
