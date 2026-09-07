@@ -1,4 +1,4 @@
-import { createPhotoCard } from './photo-card.js?v=20260908-5';
+import { createPhotoCard } from './photo-card.js?v=20260908-6';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
@@ -505,9 +505,25 @@ async function shareCard(text, label, filename, includeNumber = false, destinati
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (!blob) { $('#share-status').textContent = 'Не удалось создать открытку. Попробуй другое фото.'; return; }
   if (destination === 'download') {
-    download(blob, filename);
-    analytics('postcard_downloaded', { cardType: shareKind, questionId: index });
-    $('#share-status').textContent = 'Открытка скачана на телефон.';
+    const button = $('#story-card');
+    button.disabled = true;
+    $('#share-status').textContent = 'Готовим открытку…';
+    try {
+      if (isTelegram && typeof tg?.downloadFile === 'function') {
+        const image = await blobDataUrl(blob);
+        const uploaded = await api('/story-card', { image, questionId: index, cardType: shareKind });
+        const accepted = await new Promise(resolve => tg.downloadFile({ url: uploaded.url, file_name: filename }, resolve));
+        if (!accepted) throw new Error('download_cancelled');
+      } else {
+        download(blob, filename);
+      }
+      analytics('postcard_downloaded', { cardType: shareKind, questionId: index });
+      $('#share-status').textContent = 'Скачивание открытки началось.';
+    } catch (error) {
+      $('#share-status').textContent = error.message === 'download_cancelled' ? 'Сохранение отменено.' : 'Не удалось сохранить открытку. Попробуй ещё раз.';
+    } finally {
+      button.disabled = false;
+    }
     return;
   }
   analytics('postcard_created', { cardType: shareKind, questionId: index });

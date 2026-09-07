@@ -262,9 +262,12 @@ export function createPhotoCard({ onChange, getText }) {
     overlay.replaceChildren();
     const box = boxes[selected];
     if (box && active && editor.hidden) {
-      const frame = document.createElement('div');
-      frame.style.cssText = `position:absolute;left:${box.x/10.8}%;top:${box.y/19.2}%;width:${box.width/10.8}%;height:${box.height/19.2}%;border:1.5px solid white;box-shadow:0 0 0 1px #0008;border-radius:5px;box-sizing:border-box`;
-      overlay.append(frame);
+      const customText = selected === 'question' && document.querySelector('[data-share-kind="custom"]').classList.contains('active');
+      if (!customText) {
+        const frame = document.createElement('div');
+        frame.style.cssText = `position:absolute;left:${box.x/10.8}%;top:${box.y/19.2}%;width:${box.width/10.8}%;height:${box.height/19.2}%;border:1.5px solid white;box-shadow:0 0 0 1px #0008;border-radius:5px;box-sizing:border-box`;
+        overlay.append(frame);
+      }
       if (dragging && Math.abs(positions[selected].x - 540) < 1) {
         const guide = document.createElement('div'); guide.style.cssText = 'position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed #7cf5c5'; overlay.append(guide);
       }
