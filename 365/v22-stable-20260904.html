@@ -25,11 +25,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css?v=12" />
-    <link rel="stylesheet" href="v1.2.css?v=20" />
-    <style>
-      #question { opacity: 1; filter: none; animation: none; }
-      @media (prefers-reduced-motion: reduce) { #question { animation: none; } }
-    </style>
+    <link rel="stylesheet" href="v1.2.css?v=23" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
       (() => {
@@ -136,13 +132,6 @@
           color 0.35s ease,
           border-color 0.35s ease;
       }
-      @media (min-width: 560px) {
-        .bottom-nav.three {
-          width: 430px !important;
-          padding-left: 12px !important;
-          padding-right: 12px !important;
-        }
-      }
       .postcard-preview.theme-morning {
         background: linear-gradient(160deg, #fff8df, #edf2d8);
         color: #1e251a;
@@ -180,14 +169,8 @@
       #submit {
         scroll-margin-bottom: 140px;
       }
-      .quick-actions .share-launch.history-link {
-        background: transparent;
-        border-color: var(--line);
-        box-shadow: none;
-        color: var(--muted);
-      }
     </style>
-  </head>
+  <link rel="stylesheet" href="editor-local.css?v=20260907" /></head>
   <body class="antialiased">
     <main id="app" class="app-shell theme-day">
       <div class="paper-grain" aria-hidden="true"></div>
@@ -242,7 +225,9 @@
           </article>
           <div class="quick-actions">
             <button id="share" class="share-launch">
-              <span><b id="share-label">Поделиться</b><br /><small id="share-caption">создать открытку</small></span>
+              <span
+                >Поделиться<br /><small>создать открытку</small></span
+              >
             </button>
           </div>
         </section>
@@ -309,7 +294,11 @@
           </div>
           <label id="custom-share-wrap" class="edit-field" hidden><span>Текст открытки</span><textarea id="custom-share-text" rows="3" maxlength="500" placeholder="Напиши свой текст..."></textarea></label>
           <p>Личный ответ не добавляется автоматически. Сначала проверь открытку выше.</p>
-          <button id="make-card" class="modal-primary">Поделиться открыткой</button>
+          <p id="share-status" class="save-status" role="status" aria-live="polite"></p>
+          <div class="share-actions">
+            <button id="story-card" class="modal-primary">Сохранить открытку</button>
+            <button id="make-card" class="secondary-button">Отправить</button>
+          </div>
         </section>
       </div>
 
@@ -336,6 +325,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app-v22-stable.js?v=5"></script>
+    <script type="module" src="app-v1.2.js?v=20260907"></script>
   </body>
 </html>
