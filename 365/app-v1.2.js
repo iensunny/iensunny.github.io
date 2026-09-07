@@ -1,4 +1,4 @@
-import { createPhotoCard } from './photo-card.js?v=20260908-4';
+import { createPhotoCard } from './photo-card.js?v=20260908-5';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
@@ -569,7 +569,11 @@ function applyTheme() {
 }
 
 async function boot() {
-  try { tg?.ready?.(); tg?.expand?.(); } catch {}
+  try {
+    tg?.ready?.();
+    tg?.expand?.();
+    if (!tg?.isFullscreen) tg?.requestFullscreen?.();
+  } catch {}
   applyTheme();
   $('#demo-banner').hidden = isTelegram;
   if (!isTelegram) {
@@ -620,6 +624,9 @@ answerEl.addEventListener('blur', () => setTimeout(updateViewport, 120));
 window.visualViewport?.addEventListener('resize', updateViewport);
 window.visualViewport?.addEventListener('scroll', updateViewport);
 try { tg?.onEvent?.('viewportChanged', updateViewport); } catch {}
+try { tg?.onEvent?.('fullscreenChanged', updateViewport); } catch {}
+try { tg?.onEvent?.('safeAreaChanged', updateViewport); } catch {}
+try { tg?.onEvent?.('contentSafeAreaChanged', updateViewport); } catch {}
 try { tg?.onEvent?.('activated', applyTheme); } catch {}
 document.addEventListener('visibilitychange', () => { if (!document.hidden) applyTheme(); });
 setInterval(applyTheme, 60_000);

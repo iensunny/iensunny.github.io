@@ -59,6 +59,8 @@
       .app-shell {
         height: var(--app-height);
         max-height: var(--app-height);
+        padding-top: max(env(safe-area-inset-top), var(--tg-content-safe-area-inset-top, 0px));
+        box-sizing: border-box;
         overflow-x: hidden;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -111,7 +113,8 @@
       }
       .bottom-nav.three {
         grid-template-columns: repeat(3, 1fr);
-        height: calc(78px + env(safe-area-inset-bottom)) !important;
+        height: calc(78px + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px))) !important;
+        padding-bottom: max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)) !important;
         padding-top: 10px !important;
       }
       .bottom-nav button {
@@ -170,7 +173,7 @@
         scroll-margin-bottom: 140px;
       }
     </style>
-    <link rel="stylesheet" href="editor-local.css?v=20260908-4" /></head>
+    <link rel="stylesheet" href="editor-local.css?v=20260908-5" /></head>
   <body class="antialiased">
     <main id="app" class="app-shell theme-day">
       <div class="paper-grain" aria-hidden="true"></div>
@@ -325,6 +328,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app-v1.2.js?v=20260908-4"></script>
+    <script type="module" src="app-v1.2.js?v=20260908-5"></script>
   </body>
 </html>
