@@ -14,6 +14,7 @@ export function createPhotoCard({ onChange, getText }) {
   let selected = "photo", pinch = null;
   let zoom = 1, textScale = 1, dragging = null;
   let scrollGesture = null;
+  let press = null;
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const preview = document.querySelector('#postcard-preview');
   const controls = document.createElement('div');
@@ -63,7 +64,7 @@ export function createPhotoCard({ onChange, getText }) {
   editor.style.cssText = 'position:absolute;resize:none;background:transparent;border:0;outline:none;border-radius:0;text-align:center;padding:0;margin:0;box-sizing:border-box;z-index:2;overflow:hidden;font-family:Georgia,serif;font-weight:500;white-space:pre-wrap;overflow-wrap:anywhere';
   editor.hidden = true; stage.append(editor);
   const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = '×';
-  cancel.setAttribute('aria-label', 'Отменить ввод текста');
+  cancel.setAttribute('aria-label', 'Удалить текст');
   cancel.style.cssText = 'position:absolute;z-index:6;width:30px;height:30px;border:2px solid white;border-radius:50%;background:#d94b45;color:white;box-shadow:0 3px 12px #0005;font:500 22px/24px Arial;cursor:pointer;padding:0';
   cancel.hidden = true; stage.append(cancel);
   function editText() {
@@ -85,7 +86,13 @@ export function createPhotoCard({ onChange, getText }) {
     editor.hidden = cancel.hidden = true; editSnapshot = null;
     onChange(); canvas.focus({preventScroll:true});
   }
-  cancel.onclick = () => finishEdit(true);
+  cancel.onclick = event => {
+    event.preventDefault();
+    document.querySelector('#custom-share-text').value = '';
+    editor.value = '';
+    onChange(); update();
+    editor.focus({preventScroll:true});
+  };
   editor.onkeydown = event => { if (event.key === 'Escape') { event.stopPropagation(); finishEdit(true); } };
   stage.addEventListener('pointerdown', event => {
     if (editor.hidden || event.target === editor || event.target === cancel) return;
@@ -266,7 +273,7 @@ export function createPhotoCard({ onChange, getText }) {
     Object.assign(positions.brand, { x: 540, y: 260 });
     Object.assign(positions.question, { x: 540, y: 960 });
     Object.assign(positions.photo, { x: 0, y: 0 });
-    zoom = 1; textScale = 1; selected = 'photo'; pointers.clear(); dragging = pinch = null; update();
+    zoom = 1; textScale = 1; selected = 'photo'; pointers.clear(); dragging = pinch = press = null; scrollGesture = null; update();
   }
   controls.querySelector('[data-reset]').onclick = reset;
   function point(event) {
@@ -274,7 +281,7 @@ export function createPhotoCard({ onChange, getText }) {
     return { x: (event.clientX-r.left)*1080/r.width, y: (event.clientY-r.top)*1920/r.height };
   }
   function hit(p) {
-    return [selected, 'question', 'brand'].filter(k => boxes[k]).find(k => {
+    return ['question', 'brand'].filter(k => boxes[k]).find(k => {
       const b = boxes[k]; return p.x >= b.x-70 && p.x <= b.x+b.width+70 && p.y >= b.y-90 && p.y <= b.y+b.height+90;
     }) || 'photo';
   }
@@ -291,12 +298,23 @@ export function createPhotoCard({ onChange, getText }) {
     if (pointers.size === 2) {
       const [a,b] = [...pointers.values()];
       pinch = {key: selected, distance:Math.hypot(a.x-b.x,a.y-b.y), center:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}};
-      dragging = null; scrollGesture = null;
+      dragging = null; scrollGesture = null; press = null;
     } else if (pointers.size === 1) {
-      selected = hit(p);
+      const pressed = hit(p);
+      if (selected !== 'photo') {
+        if (pressed !== 'photo') selected = pressed;
+        dragging = {id:event.pointerId, p, x:positions[selected].x, y:positions[selected].y};
+        press = {id:event.pointerId, p, background:pressed === 'photo', moved:false};
+        scrollGesture = null;
+      } else {
+        selected = pressed;
+      }
       if (event.pointerType === 'touch' && selected === 'photo') {
         scrollGesture = {id:event.pointerId,y:event.clientY}; dragging = null;
-      } else dragging = {id:event.pointerId, p, x:positions[selected].x, y:positions[selected].y};
+      } else if (!dragging) {
+        dragging = {id:event.pointerId, p, x:positions[selected].x, y:positions[selected].y};
+        press = {id:event.pointerId, p, background:false, moved:false};
+      }
     }
     update();
   };
@@ -322,6 +340,7 @@ export function createPhotoCard({ onChange, getText }) {
       positions[key].x += center.x-pinch.center.x; positions[key].y += center.y-pinch.center.y;
       pinch = {key,distance,center};
     } else if (dragging && dragging.id === event.pointerId) {
+      if (press?.id === event.pointerId && Math.hypot(p.x-press.p.x,p.y-press.p.y) >= 12) press.moved = true;
       const pos = positions[selected]; pos.x = dragging.x+p.x-dragging.p.x; pos.y = dragging.y+p.y-dragging.p.y;
       if (selected !== 'photo') {
         const b = bounds[selected];
@@ -332,15 +351,21 @@ export function createPhotoCard({ onChange, getText }) {
   };
   function end(event) {
     const tap = dragging && dragging.id === event.pointerId && selected === 'question' && event.type === 'pointerup' && Math.hypot(point(event).x-dragging.p.x,point(event).y-dragging.p.y) < 12;
+    const deselect = press?.id === event.pointerId && press.background && !press.moved && event.type === 'pointerup';
+    if (deselect && dragging) {
+      positions[selected].x = dragging.x;
+      positions[selected].y = dragging.y;
+    }
     if (!pointers.delete(event.pointerId)) return;
-    pinch = null; dragging = null; scrollGesture = null;
+    pinch = null; dragging = null; scrollGesture = null; press = null;
     if (pointers.size === 1 && event.type !== 'pointercancel') {
       const [id,p] = [...pointers.entries()][0];
       if (selected === 'photo') { pointers.clear(); }
       else dragging = {id,p,x:positions[selected].x,y:positions[selected].y};
     }
+    if (deselect) selected = 'photo';
     update();
-    if (tap) editText();
+    if (tap && !deselect) editText();
   }
   canvas.onpointerup = canvas.onpointercancel = canvas.onlostpointercapture = end;
   canvas.addEventListener('wheel', event => {

@@ -1,4 +1,4 @@
-import { createPhotoCard } from './photo-card.js?v=20260908-2';
+import { createPhotoCard } from './photo-card.js?v=20260908-3';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
@@ -346,7 +346,8 @@ function wrapText(ctx, text, width) {
 function download(blob, name) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = url; link.download = name; link.click();
+  link.href = url; link.download = name;
+  document.body.append(link); link.click(); link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -499,7 +500,8 @@ async function shareCard(text, label, filename, includeNumber = false, destinati
   if (!blob) { $('#share-status').textContent = 'Не удалось создать открытку. Попробуй другое фото.'; return; }
   if (destination === 'download') {
     download(blob, filename);
-    $('#share-status').textContent = 'Изображение сохранено. Его можно добавить в Telegram Stories вручную.';
+    analytics('postcard_downloaded', { cardType: shareKind, questionId: index });
+    $('#share-status').textContent = 'Открытка скачана на телефон.';
     return;
   }
   analytics('postcard_created', { cardType: shareKind, questionId: index });
