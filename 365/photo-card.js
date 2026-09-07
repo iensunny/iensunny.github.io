@@ -62,18 +62,16 @@ export function createPhotoCard({ onChange, getText }) {
   let textLayout = null;
   editor.style.cssText = 'position:absolute;resize:none;background:transparent;border:0;outline:none;border-radius:0;text-align:center;padding:0;margin:0;box-sizing:border-box;z-index:2;overflow:hidden;font-family:Georgia,serif;font-weight:500;white-space:pre-wrap;overflow-wrap:anywhere';
   editor.hidden = true; stage.append(editor);
-  const done = document.createElement('button'); done.type = 'button'; done.textContent = 'Готово';
-  const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Отмена';
-  for (const [button,side] of [[done,'right'],[cancel,'left']]) {
-    button.style.cssText = `position:absolute;${side}:12px;top:12px;z-index:3;padding:10px 8px;border:0;background:transparent;color:white;text-shadow:0 1px 4px black;font:500 15px Arial;cursor:pointer`;
-    button.hidden = true; stage.append(button);
-  }
+  const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = '×';
+  cancel.setAttribute('aria-label', 'Отменить ввод текста');
+  cancel.style.cssText = 'position:absolute;z-index:6;width:30px;height:30px;border:2px solid white;border-radius:50%;background:#d94b45;color:white;box-shadow:0 3px 12px #0005;font:500 22px/24px Arial;cursor:pointer;padding:0';
+  cancel.hidden = true; stage.append(cancel);
   function editText() {
     if (mode !== 'photo' || !document.querySelector('[data-share-kind="custom"]').classList.contains('active')) return;
     editSnapshot = {value:document.querySelector('#custom-share-text').value, position:{...positions.question}};
     selected = 'question';
     editor.value = editSnapshot.value;
-    editor.hidden = done.hidden = cancel.hidden = false;
+    editor.hidden = cancel.hidden = false;
     update(); editor.focus({preventScroll:true});
   }
   editor.oninput = () => {
@@ -84,15 +82,20 @@ export function createPhotoCard({ onChange, getText }) {
       document.querySelector('#custom-share-text').value = editSnapshot.value;
       Object.assign(positions.question,editSnapshot.position);
     }
-    editor.hidden = done.hidden = cancel.hidden = true; editSnapshot = null;
+    editor.hidden = cancel.hidden = true; editSnapshot = null;
     onChange(); canvas.focus({preventScroll:true});
   }
-  done.onclick = () => finishEdit(false);
   cancel.onclick = () => finishEdit(true);
   editor.onkeydown = event => { if (event.key === 'Escape') { event.stopPropagation(); finishEdit(true); } };
+  stage.addEventListener('pointerdown', event => {
+    if (editor.hidden || event.target === editor || event.target === cancel) return;
+    finishEdit(false);
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
   canvas.ondblclick = editText;
   document.querySelectorAll('[data-share-kind]').forEach(button => button.addEventListener('click', () => {
-    editor.hidden = done.hidden = cancel.hidden = true;
+    editor.hidden = cancel.hidden = true;
     if (button.dataset.shareKind === 'custom') setTimeout(editText, 0);
   }));
   const style = document.createElement('style');
@@ -214,7 +217,7 @@ export function createPhotoCard({ onChange, getText }) {
   }
   function update() {
     const active = mode === 'photo';
-    if (!active) editor.hidden = done.hidden = cancel.hidden = true;
+    if (!active) editor.hidden = cancel.hidden = true;
     preview.hidden = active; stage.hidden = !active; canvas.hidden = !active; options.hidden = !active;
     canvas.setAttribute('aria-label', `365: к себе. ${getText()}`);
     if (active) render(canvas, getText());
@@ -231,6 +234,9 @@ export function createPhotoCard({ onChange, getText }) {
       editor.style.color = textColor.value === 'light' ? '#fffdf7' : '#182015';
       editor.style.textShadow = textColor.value === 'light' ? '0 0 2px #000,0 0 3px #000' : '0 0 2px #fff,0 0 3px #fff';
       editor.style.caretColor = editor.style.color;
+      cancel.style.left = `${Math.min(94, (x + 430) / 10.8)}%`;
+      cancel.style.top = `${Math.max(2, (y - halfHeight - size * 1.05) / 19.2)}%`;
+      cancel.style.transform = 'translate(-100%, -45%)';
     }
     colorButton.disabled = selected !== 'brand' && selected !== 'question';
     colorButton.setAttribute('aria-label',selected === 'brand' ? 'Цвет логотипа: светлый или тёмный' : 'Цвет текста: светлый или тёмный');
@@ -269,7 +275,7 @@ export function createPhotoCard({ onChange, getText }) {
   }
   function hit(p) {
     return [selected, 'question', 'brand'].filter(k => boxes[k]).find(k => {
-      const b = boxes[k]; return p.x >= b.x-30 && p.x <= b.x+b.width+30 && p.y >= b.y-30 && p.y <= b.y+b.height+30;
+      const b = boxes[k]; return p.x >= b.x-70 && p.x <= b.x+b.width+70 && p.y >= b.y-90 && p.y <= b.y+b.height+90;
     }) || 'photo';
   }
   function scaleTo(value, anchor = {x:540,y:960}) {

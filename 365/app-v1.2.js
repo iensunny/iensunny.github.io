@@ -1,4 +1,4 @@
-import { createPhotoCard } from './photo-card.js?v=20260907';
+import { createPhotoCard } from './photo-card.js?v=20260908-2';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
