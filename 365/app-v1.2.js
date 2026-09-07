@@ -1,5 +1,7 @@
+import { createPhotoCard } from './photo-card.js?v=20260907';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
+const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
 const API_URL = 'https://questions-365-bot.iensunny-365.workers.dev';
 const BOT_LINK = 'https://t.me/qqwestionsBot';
 const APP_VERSION = 'v23';
@@ -70,6 +72,7 @@ function removePersisted(keys) {
 }
 
 async function api(path, data = {}) {
+  if (isLocal) throw new Error('local_only');
   const response = await fetch(API_URL + path, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -80,7 +83,7 @@ async function api(path, data = {}) {
 }
 
 function analytics(event, metadata = {}) {
-  if (!isTelegram) return;
+  if (!isTelegram || isLocal) return;
   fetch(API_URL + '/events', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -439,6 +442,8 @@ function selectedShareText() {
   return currentQuestion;
 }
 
+const photoCard = createPhotoCard({ onChange: updateSharePreview, getText: selectedShareText });
+
 function updateSharePreview() {
   const labels = { question: 'Вопрос дня', thought: 'Мысль дня', custom: 'Твоя мысль' };
   const text = selectedShareText();
@@ -446,8 +451,10 @@ function updateSharePreview() {
   $('#postcard-label').hidden = shareKind === 'custom';
   $('#postcard-question').textContent = text || 'Здесь появится твой текст';
   $('#postcard-meta').hidden = shareKind === 'custom';
-  $('#custom-share-wrap').hidden = shareKind !== 'custom';
-  $('#make-card').disabled = !text;
+  $('#custom-share-wrap').hidden = shareKind !== 'custom' || photoCard.active;
+  photoCard.update();
+  $('#make-card').disabled = !text || !photoCard.ready;
+  $('#story-card').disabled = !text || !photoCard.ready;
   $$('[data-share-kind]').forEach((button) => button.classList.toggle('active', button.dataset.shareKind === shareKind));
 }
 
@@ -467,7 +474,11 @@ function blobDataUrl(blob) {
 }
 
 async function shareCard(text, label, filename, includeNumber = false, destination = 'chat') {
+  if (!text || !photoCard.ready) return;
   const canvas = document.createElement('canvas');
+  if (photoCard.active) {
+    photoCard.render(canvas, text);
+  } else {
   canvas.width = 1080; canvas.height = 1350;
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, 1080, 1350);
@@ -483,7 +494,14 @@ async function shareCard(text, label, filename, includeNumber = false, destinati
   let y = 700 - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((line) => { ctx.fillText(line, 540, y); y += lineHeight; });
   ctx.fillStyle = '#53604c'; ctx.font = '600 25px Arial'; ctx.fillText('365: К СЕБЕ', 540, 1220);
+  }
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) { $('#share-status').textContent = 'Не удалось создать открытку. Попробуй другое фото.'; return; }
+  if (destination === 'download') {
+    download(blob, filename);
+    $('#share-status').textContent = 'Изображение сохранено. Его можно добавить в Telegram Stories вручную.';
+    return;
+  }
   analytics('postcard_created', { cardType: shareKind, questionId: index });
   if (destination === 'story') {
     const button = $('#story-card');
@@ -621,7 +639,7 @@ $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind =
 $('#custom-share-text').addEventListener('input', updateSharePreview);
 const shareCardArgs = () => [selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png', shareKind !== 'custom'];
 $('#make-card').onclick = () => shareCard(...shareCardArgs(), 'chat');
-$('#story-card').onclick = () => shareCard(...shareCardArgs(), 'story');
+$('#story-card').onclick = () => shareCard(...shareCardArgs(), 'download');
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;
