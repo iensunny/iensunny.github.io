@@ -17,6 +17,10 @@ export function createPhotoCard({ onChange, getText }) {
   let press = null;
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const preview = document.querySelector('#postcard-preview');
+  const closeEditor = document.querySelector('#share-modal .modal-close');
+  closeEditor.textContent = '←';
+  closeEditor.setAttribute('aria-label', 'Вернуться в приложение');
+  closeEditor.title = 'Вернуться в приложение';
   const controls = document.createElement('div');
   controls.innerHTML = `
     <div class="share-choices" role="group" aria-label="Оформление открытки" style="grid-template-columns:1fr 1fr">
