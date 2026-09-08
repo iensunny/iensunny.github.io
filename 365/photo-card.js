@@ -137,9 +137,9 @@ export function createPhotoCard({ onChange, getText, getMeta }) {
     const select = selected === 'brand' ? logoColor : textColor;
     select.value = select.value === 'light' ? 'dark' : 'light'; update();
   });
-  const shadeButton = tool('shade','Светлая или тёмная подложка',()=>{
+  const shadeButton = tool('shade','Настроить подложку',()=>{
     if (!photo) { palettePanel.hidden = !palettePanel.hidden; return; }
-    backdrop.value = backdrop.value === 'dark' ? 'light' : 'dark'; update();
+    backdropPanel.hidden = !backdropPanel.hidden;
   });
   const removeButton = tool('remove','Убрать фото',()=>modes.querySelector('[data-card-mode=brand]').click());
   tool('reset','Сбросить расположение',()=>reset());
@@ -158,8 +158,25 @@ export function createPhotoCard({ onChange, getText, getMeta }) {
     palettePanel.append(button);
   }
   stage.append(palettePanel);
+  const backdropPanel = document.createElement('div'); backdropPanel.hidden = true;
+  backdropPanel.className = 'story-backdrop-panel';
+  backdropPanel.setAttribute('role','group'); backdropPanel.setAttribute('aria-label','Настройка подложки');
+  const backdropChoices = document.createElement('div'); backdropChoices.className = 'story-backdrop-choices';
+  for (const [value,label] of [['dark','Тёмная'],['light','Светлая']]) {
+    const button = document.createElement('button'); button.type = 'button'; button.dataset.backdrop = value; button.textContent = label;
+    button.onclick = () => { backdrop.value = value; update(); };
+    backdropChoices.append(button);
+  }
+  const backdropIntensity = document.createElement('input');
+  backdropIntensity.type = 'range'; backdropIntensity.min = '0'; backdropIntensity.max = '60'; backdropIntensity.step = '5'; backdropIntensity.value = '35';
+  backdropIntensity.setAttribute('aria-label','Интенсивность подложки');
+  backdropIntensity.oninput = update;
+  const backdropLabel = document.createElement('label'); backdropLabel.className = 'story-backdrop-label'; backdropLabel.textContent = 'Интенсивность';
+  backdropLabel.append(backdropIntensity);
+  backdropPanel.append(backdropChoices, backdropLabel);
+  stage.append(backdropPanel);
   const toolbarStyle = document.createElement('style');
-  toolbarStyle.textContent = '#share-modal .story-toolbar{position:absolute;bottom:12px;left:12px;right:12px;display:flex;gap:8px;align-items:center;justify-content:space-between;z-index:4;padding:6px;border-radius:18px;background:#18201855;backdrop-filter:blur(12px)}#share-modal .story-toolbar button{display:grid;place-items:center;min-width:44px;height:44px;padding:9px;border:0;border-radius:12px;background:transparent;color:white;cursor:pointer}#share-modal .story-toolbar button:disabled{opacity:.25;cursor:default}#share-modal .story-toolbar button:hover:not(:disabled){background:#ffffff20}#share-modal .story-toolbar svg{width:24px;height:24px}';
+  toolbarStyle.textContent = '#share-modal .story-toolbar{position:absolute;bottom:12px;left:12px;right:12px;display:flex;gap:8px;align-items:center;justify-content:space-between;z-index:4;padding:6px;border-radius:18px;background:#18201855;backdrop-filter:blur(12px)}#share-modal .story-toolbar button{display:grid;place-items:center;min-width:44px;height:44px;padding:9px;border:0;border-radius:12px;background:transparent;color:white;cursor:pointer}#share-modal .story-toolbar button:disabled{opacity:.25;cursor:default}#share-modal .story-toolbar button:hover:not(:disabled){background:#ffffff20}#share-modal .story-toolbar svg{width:24px;height:24px}#share-modal .story-backdrop-panel{position:absolute;bottom:80px;left:12px;right:12px;z-index:5;padding:10px 12px 12px;border-radius:16px;background:#181c18df;color:white;box-shadow:0 4px 24px #0003;backdrop-filter:blur(14px)}#share-modal .story-backdrop-panel[hidden]{display:none}#share-modal .story-backdrop-choices{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}#share-modal .story-backdrop-choices button{min-height:36px;border:0;border-radius:10px;background:#ffffff18;color:white;font:500 13px Arial}#share-modal .story-backdrop-choices button[aria-pressed=true]{background:#fff;color:#182015}#share-modal .story-backdrop-label{display:block;font:500 11px Arial;letter-spacing:.02em;color:#ffffffb8}#share-modal .story-backdrop-panel input[type=range]{display:block;width:100%;height:24px;margin:2px 0 0;accent-color:#fff;cursor:pointer}';
   document.head.append(toolbarStyle);
   function render(target, text, exporting = false) {
     const ctx = target.getContext('2d');
@@ -175,12 +192,14 @@ export function createPhotoCard({ onChange, getText, getMeta }) {
       ctx.drawImage(photo, (1080 - photo.width * scale) / 2 + positions.photo.x, (1920 - photo.height * scale) / 2 + positions.photo.y, photo.width * scale, photo.height * scale);
     }
     const rgb = backdrop.value === 'dark' ? '0,0,0' : '255,255,255';
+    const strength = Number(backdropIntensity.value) / 100;
+    const softStrength = strength * .57;
     const gradient = ctx.createLinearGradient(0, 0, 0, 1920);
-    gradient.addColorStop(0, `rgba(${rgb},.35)`);
-    gradient.addColorStop(.25, `rgba(${rgb},.20)`);
-    gradient.addColorStop(.5, `rgba(${rgb},.35)`);
-    gradient.addColorStop(.75, `rgba(${rgb},.20)`);
-    gradient.addColorStop(1, `rgba(${rgb},.35)`);
+    gradient.addColorStop(0, `rgba(${rgb},${strength})`);
+    gradient.addColorStop(.25, `rgba(${rgb},${softStrength})`);
+    gradient.addColorStop(.5, `rgba(${rgb},${strength})`);
+    gradient.addColorStop(.75, `rgba(${rgb},${softStrength})`);
+    gradient.addColorStop(1, `rgba(${rgb},${strength})`);
     if (photo) { ctx.fillStyle = gradient; ctx.fillRect(0, 0, 1080, 1920); }
     function color(value) {
       const light = value === 'light';
@@ -264,9 +283,11 @@ export function createPhotoCard({ onChange, getText, getMeta }) {
     colorButton.title = colorButton.getAttribute('aria-label');
     colorButton.setAttribute('aria-pressed',String((selected === 'brand' ? logoColor : textColor).value === 'light'));
     shadeButton.disabled = Boolean(photo && selected !== 'photo');
-    shadeButton.title = photo ? 'Светлая или тёмная подложка' : 'Цвет фона: утро, день, вечер, ночь';
+    shadeButton.title = photo ? 'Настроить подложку' : 'Цвет фона: утро, день, вечер, ночь';
     shadeButton.setAttribute('aria-label',shadeButton.title);
     if (photo) palettePanel.hidden = true;
+    if (!photo || selected !== 'photo') backdropPanel.hidden = true;
+    backdropPanel.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.backdrop === backdrop.value)));
     palettePanel.querySelectorAll('button').forEach(button => {
       const active = button.dataset.theme === backgroundTheme;
       button.setAttribute('aria-pressed',String(active)); button.style.borderColor = active ? '#7d9b68' : 'transparent';
