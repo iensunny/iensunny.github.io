@@ -66,6 +66,9 @@
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
       }
+      @media (max-width: 559px) {
+        .app-content { padding-top: 16px !important; }
+      }
       html[data-time-theme='morning'], html[data-time-theme='morning'] body { background: #fff4d8 !important; }
       html[data-time-theme='morning'] .app-shell { --bg:#fff4d8; --ink:#282318; --muted:#746c59; --card:#fffaf0; --accent:#8a6b28; --accent-2:#b69648; --pill:#f5e8bd; --line:#917b4933; --surface:#fffaf0; color:#282318 !important; background:#fff4d8 !important; }
       html[data-time-theme='day'], html[data-time-theme='day'] body { background: #edf4e9 !important; }
@@ -173,7 +176,7 @@
         scroll-margin-bottom: 140px;
       }
     </style>
-    <link rel="stylesheet" href="editor-local.css?v=20260908-9" /></head>
+    <link rel="stylesheet" href="editor-local.css?v=20260908-11" /></head>
   <body class="antialiased">
     <main id="app" class="app-shell theme-day">
       <div class="paper-grain" aria-hidden="true"></div>
@@ -327,6 +330,6 @@
 
       <div id="toast" class="toast" hidden role="status"></div>
     </main>
-    <script type="module" src="app-v1.2.js?v=20260908-9"></script>
+    <script type="module" src="app-v1.2.js?v=20260908-11"></script>
   </body>
 </html>

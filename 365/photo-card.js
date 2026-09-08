@@ -1,5 +1,5 @@
 // The preview and exported file use the same canvas renderer.
-export function createPhotoCard({ onChange, getText }) {
+export function createPhotoCard({ onChange, getText, getMeta }) {
   let mode = 'photo', photo = null, loading = false, generation = 0;
   const backgroundPalettes = {
     morning: { name:'Утро', bg:'#fff4d8', card:'#fffaf0' },
@@ -225,6 +225,15 @@ export function createPhotoCard({ onChange, getText }) {
     const question = fit('question', Math.max(0, ...lines.map(line => ctx.measureText(line).width)) / 2 + 12, halfHeight + size, halfHeight + size * .4);
     textLayout = {size,lines:Math.max(1,lines.length),x:question.x,y:question.y,halfHeight};
     if (editor.hidden || exporting) lines.forEach((line, i) => write(line, question.x, question.y + (i - (lines.length - 1) / 2) * size * 1.4));
+
+    const meta = getMeta?.();
+    if (meta) {
+      color(textColor.value);
+      ctx.font = '600 27px Arial';
+      write(meta.label.toUpperCase(), 540, 1475);
+      ctx.font = '400 24px Arial';
+      write(`365: к себе · #${meta.number}`, 540, 1520);
+    }
   }
   function update() {
     const active = mode === 'photo';

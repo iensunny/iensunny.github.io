@@ -1,4 +1,4 @@
-import { createPhotoCard } from './photo-card.js?v=20260908-9';
+import { createPhotoCard } from './photo-card.js?v=20260908-11';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
@@ -449,7 +449,14 @@ function selectedShareText() {
   return currentQuestion;
 }
 
-const photoCard = createPhotoCard({ onChange: updateSharePreview, getText: selectedShareText });
+const photoCard = createPhotoCard({
+  onChange: updateSharePreview,
+  getText: selectedShareText,
+  getMeta: () => shareKind === 'custom' ? null : {
+    label: shareKind === 'thought' ? 'Мысль дня' : 'Вопрос дня',
+    number: index + 1,
+  },
+});
 
 function updateSharePreview() {
   const labels = { question: 'Вопрос дня', thought: 'Мысль дня', custom: 'Твоя мысль' };
