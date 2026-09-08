@@ -1,10 +1,11 @@
-import { createPhotoCard } from './photo-card.js?v=20260908-12';
+import { createPhotoCard } from './photo-card.js?v=20260908-13';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
 const API_URL = 'https://questions-365-bot.iensunny-365.workers.dev';
 const BOT_LINK = 'https://t.me/qqwestionsBot';
-const APP_VERSION = 'v23';
+const trackedShareLink = () => `${API_URL}/go/card_share_${dayKey().replaceAll('-', '')}`;
+const APP_VERSION = 'v24';
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const tg = window.Telegram?.WebApp;
@@ -322,6 +323,7 @@ async function exportData() {
 }
 
 function deleteAll() {
+  analytics('delete_data_screen_opened');
   showConfirm('Удалить все ответы, историю вопросов и настройки? Это действие нельзя отменить.', async () => {
     const fresh = await api('/delete-all', { confirmation: 'DELETE' });
     const storedKeys = Object.keys(localStorage).filter((key) => key.startsWith(prefix));
@@ -505,7 +507,7 @@ async function shareCard(text, label, filename, includeNumber = false) {
   const file = new File([blob], filename, { type: 'image/png' });
   try {
     if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ title: '365: к себе', text: BOT_LINK, files: [file] });
+      await navigator.share({ title: '365: к себе', text: trackedShareLink(), files: [file] });
       analytics('postcard_shared', { cardType: shareKind, questionId: index });
       return;
     }
