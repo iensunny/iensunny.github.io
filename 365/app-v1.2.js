@@ -1,4 +1,4 @@
-import { createPhotoCard } from './photo-card.js?v=20260908-6';
+import { createPhotoCard } from './photo-card.js?v=20260908-7';
 import { QUESTIONS, POSTSCRIPTS } from './question-bank-v1.2.js?v=23';
 
 const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
@@ -461,7 +461,6 @@ function updateSharePreview() {
   $('#custom-share-wrap').hidden = shareKind !== 'custom' || photoCard.active;
   photoCard.update();
   $('#make-card').disabled = !text || !photoCard.ready;
-  $('#story-card').disabled = !text || !photoCard.ready;
   $$('[data-share-kind]').forEach((button) => button.classList.toggle('active', button.dataset.shareKind === shareKind));
 }
 
@@ -471,16 +470,7 @@ function openShare(kind = 'question', thought = '') {
   updateSharePreview(); openModal('#share-modal');
 }
 
-function blobDataUrl(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function shareCard(text, label, filename, includeNumber = false, destination = 'chat') {
+async function shareCard(text, label, filename, includeNumber = false) {
   if (!text || !photoCard.ready) return;
   const canvas = document.createElement('canvas');
   if (photoCard.active) {
@@ -504,51 +494,7 @@ async function shareCard(text, label, filename, includeNumber = false, destinati
   }
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (!blob) { $('#share-status').textContent = 'Не удалось создать открытку. Попробуй другое фото.'; return; }
-  if (destination === 'download') {
-    const button = $('#story-card');
-    button.disabled = true;
-    $('#share-status').textContent = 'Готовим открытку…';
-    try {
-      if (isTelegram && typeof tg?.downloadFile === 'function') {
-        const image = await blobDataUrl(blob);
-        const uploaded = await api('/story-card', { image, questionId: index, cardType: shareKind });
-        const accepted = await new Promise(resolve => tg.downloadFile({ url: uploaded.url, file_name: filename }, resolve));
-        if (!accepted) throw new Error('download_cancelled');
-      } else {
-        download(blob, filename);
-      }
-      analytics('postcard_downloaded', { cardType: shareKind, questionId: index });
-      $('#share-status').textContent = 'Скачивание открытки началось.';
-    } catch (error) {
-      $('#share-status').textContent = error.message === 'download_cancelled' ? 'Сохранение отменено.' : 'Не удалось сохранить открытку. Попробуй ещё раз.';
-    } finally {
-      button.disabled = false;
-    }
-    return;
-  }
   analytics('postcard_created', { cardType: shareKind, questionId: index });
-  if (destination === 'story') {
-    const button = $('#story-card');
-    button.disabled = true;
-    $('#share-status').textContent = 'Готовим историю…';
-    try {
-      if (typeof tg?.shareToStory !== 'function') throw new Error('stories_not_supported');
-      const image = await blobDataUrl(blob);
-      const uploaded = await api('/story-card', { image, questionId: index, cardType: shareKind });
-      tg.shareToStory(uploaded.url, {
-        text: '365 · к себе — один бережный вопрос в день',
-        widget_link: { url: BOT_LINK, name: 'Открыть вопрос' },
-      });
-      analytics('story_shared', { cardType: shareKind, questionId: index });
-      $('#share-status').textContent = 'Открываем редактор истории…';
-    } catch (error) {
-      analytics('client_error', { errorType: error.message === 'stories_not_supported' ? 'stories_not_supported' : 'story_share_failed' });
-      $('#share-status').textContent = error.message === 'stories_not_supported' ? 'Обнови Telegram, чтобы публиковать открытки в историях.' : 'Не удалось открыть историю. Попробуй ещё раз.';
-    } finally {
-      button.disabled = false;
-    }
-    return;
-  }
   const file = new File([blob], filename, { type: 'image/png' });
   try {
     if (navigator.canShare?.({ files: [file] })) {
@@ -669,8 +615,7 @@ $('#share').onclick = () => openShare('question');
 $$('[data-share-kind]').forEach((button) => button.onclick = () => { shareKind = button.dataset.shareKind; updateSharePreview(); });
 $('#custom-share-text').addEventListener('input', updateSharePreview);
 const shareCardArgs = () => [selectedShareText(), shareKind === 'question' ? 'ВОПРОС ДНЯ' : shareKind === 'thought' ? 'МЫСЛЬ ДНЯ' : '', '365-k-sebe.png', shareKind !== 'custom'];
-$('#make-card').onclick = () => shareCard(...shareCardArgs(), 'chat');
-$('#story-card').onclick = () => shareCard(...shareCardArgs(), 'download');
+$('#make-card').onclick = () => shareCard(...shareCardArgs());
 $('#save-edit').onclick = saveEdit;
 $('#export-data').onclick = exportData;
 $('#delete-data').onclick = deleteAll;

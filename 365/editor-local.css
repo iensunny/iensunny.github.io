@@ -22,7 +22,7 @@
 #share-modal [data-reset] {display:block;width:auto;margin:14px 0 0 auto;min-height:30px;padding:4px 0;border:0;background:transparent;color:#687663;font:500 12px Arial}
 #share-modal .share-sheet>p:not(#share-status) {display:none}
 #share-modal [role=status]:empty {display:none}
-#share-modal .share-actions {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+#share-modal .share-actions {display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 #share-modal .share-actions button {border-radius:14px;font:600 12px Arial;min-height:46px;height:auto;padding:12px;border:0;background:var(--pill);color:var(--accent)}
 #share-modal .share-actions .modal-primary {background:var(--accent);color:#fff}
 #share-modal button:focus-visible {outline:2px solid #71965d;outline-offset:3px}
