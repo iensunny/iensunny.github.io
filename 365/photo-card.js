@@ -15,6 +15,7 @@ export function createPhotoCard({ onChange, getText }) {
   let zoom = 1, textScale = 1, dragging = null;
   let scrollGesture = null;
   let press = null;
+  let lastTextTap = 0;
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const preview = document.querySelector('#postcard-preview');
   const closeEditor = document.querySelector('#share-modal .modal-close');
@@ -104,7 +105,6 @@ export function createPhotoCard({ onChange, getText }) {
     event.preventDefault();
     event.stopPropagation();
   }, true);
-  canvas.ondblclick = editText;
   document.querySelectorAll('[data-share-kind]').forEach(button => button.addEventListener('click', () => {
     editor.hidden = cancel.hidden = true;
     if (button.dataset.shareKind === 'custom') setTimeout(editText, 0);
@@ -350,7 +350,10 @@ export function createPhotoCard({ onChange, getText }) {
       positions[key].x += center.x-pinch.center.x; positions[key].y += center.y-pinch.center.y;
       pinch = {key,distance,center};
     } else if (dragging && dragging.id === event.pointerId) {
-      if (press?.id === event.pointerId && Math.hypot(p.x-press.p.x,p.y-press.p.y) >= 12) press.moved = true;
+      if (press?.id === event.pointerId && Math.hypot(p.x-press.p.x,p.y-press.p.y) >= 12) {
+        press.moved = true;
+        lastTextTap = 0;
+      }
       const pos = positions[selected]; pos.x = dragging.x+p.x-dragging.p.x; pos.y = dragging.y+p.y-dragging.p.y;
       if (selected !== 'photo') {
         const b = bounds[selected];
@@ -375,7 +378,15 @@ export function createPhotoCard({ onChange, getText }) {
     }
     if (deselect) selected = 'photo';
     update();
-    if (tap && !deselect) editText();
+    if (tap && !deselect && document.querySelector('[data-share-kind="custom"]').classList.contains('active')) {
+      const now = Date.now();
+      if (now - lastTextTap < 350) {
+        lastTextTap = 0;
+        editText();
+      } else {
+        lastTextTap = now;
+      }
+    }
   }
   canvas.onpointerup = canvas.onpointercancel = canvas.onlostpointercapture = end;
   canvas.addEventListener('touchmove', event => {
